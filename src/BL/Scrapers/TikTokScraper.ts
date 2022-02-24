@@ -93,6 +93,7 @@ export class TikTokScraper {
 
       video: {
         id: info.ItemModule[id].video.id,
+        description: info.ItemModule[id].video.desc,
         height: Number(info.ItemModule[id].video.height),
         width: Number(info.ItemModule[id].video.width),
         duration: Number(info.ItemModule[id].video.duration),

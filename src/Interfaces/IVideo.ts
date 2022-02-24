@@ -4,6 +4,7 @@
 
 export interface IVideo {
   id: number;
+  description: string;
   height: number;
   width: number;
   duration: number;
