@@ -4,7 +4,8 @@
   "description": "A scraper for tiktok videos",
   "main": "dist/main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "tsc && node dist/main.js",
+    "build:docs": "npx typedoc src/main.ts"
   },
   "repository": {
     "type": "git",
