@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "moduleResolution": "node",
+    "removeComments": false,
+    "alwaysStrict": true,
+    "pretty": true,
+    "target": "es2021",
+    "lib": ["ES2021", "ES2015"],
+    "sourceMap": true,
+    "inlineSources": true,
+    "module": "commonjs",
+    "declaration": true,
+    "declarationMap": true,
+    "outDir": "dist",
+    "incremental": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true
+  },
+  "include": ["src/**/**/*.ts"]
+}
