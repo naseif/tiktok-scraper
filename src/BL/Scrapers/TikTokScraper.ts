@@ -2,7 +2,6 @@ import fetch, { RequestInit } from "node-fetch";
 import * as cheerio from "cheerio";
 import http from "node:http";
 import https from "node:https";
-import { writeFileSync } from "node:fs";
 import { IVideo } from "../../Interfaces/index";
 import { IUser } from "../../Interfaces/IUser";
 import { User } from "../Entities/User";
@@ -69,12 +68,16 @@ export class TikTokScraper {
    * @param content the HTML content of the Page
    */
 
-  private handleHTMLContent(type: string, content: string) {
-    const removeWindowObject = content
-      .replace(`window['SIGI_STATE']`, `module.exports.${type}`)
-      .replace(`window['SIGI_RETRY']`, `const idc`);
+  private handleHTMLContent(content: string) {
+    const htmlObject = content;
+    const removeWindowObject = htmlObject
+      .split("window['SIGI_STATE']=")[1]
+      .indexOf(";window['SIGI_RETRY']=");
 
-    writeFileSync(`${__dirname}/${type}.js`, removeWindowObject, "utf-8");
+    const object = JSON.parse(
+      htmlObject.split("window['SIGI_STATE']=")[1].slice(0, removeWindowObject)
+    );
+    return object;
   }
 
   /**
@@ -89,51 +92,32 @@ export class TikTokScraper {
     const $ = await this.requestWebsite(uri);
     const videoObject = $("#sigi-persisted-data").text();
 
-    this.handleHTMLContent("video", videoObject);
+    const videoJson = this.handleHTMLContent(videoObject);
 
-    const { video } = require(`${__dirname}/video.js`);
+    const id = videoJson.ItemList.video.list[0];
 
-    const id = video.ItemList.video.list[0];
-
-    const videoResult: IVideo = {
-      id: video.ItemModule[id].video.id,
-      description: video.ItemModule[id].video.desc,
-      createdAt: new Date(
-        Number(video.ItemModule[id].createTime) * 1000
+    const videoResult: IVideo = new Video(
+      videoJson.ItemModule[id].video.id,
+      videoJson.ItemModule[id].video.desc,
+      new Date(
+        Number(videoJson.ItemModule[id].createTime) * 1000
       ).toLocaleDateString(),
-      height: Number(video.ItemModule[id].video.height),
-      width: Number(video.ItemModule[id].video.width),
-      duration: Number(video.ItemModule[id].video.duration),
-      resolution: video.ItemModule[id].video.ratio,
-      shareCount: video.ItemModule[id].stats.shareCount,
-      likesCount: video.ItemModule[id].stats.diggCount,
-      commentCount: video.ItemModule[id].stats.commentCount,
-      playCount: video.ItemModule[id].stats.playCount,
-      cover: video.ItemModule[id].video.cover,
-      dynamicCover: video.ItemModule[id].video.dynamicCover,
-      playURL: video.ItemModule[id].video.playAddr.trim(),
-      downloadURL: video.ItemModule[id].video.downloadAddr.trim(),
-      fomrat: video.ItemModule[id].video.format,
-    };
-
-    return new Video(
-      videoResult.id,
-      videoResult.description,
-      videoResult.createdAt,
-      videoResult.height,
-      videoResult.width,
-      videoResult.duration,
-      videoResult.resolution,
-      videoResult.shareCount,
-      videoResult.likesCount,
-      videoResult.commentCount,
-      videoResult.playCount,
-      videoResult.cover,
-      videoResult.dynamicCover,
-      videoResult.playURL,
-      videoResult.downloadURL,
-      videoResult.fomrat
+      Number(videoJson.ItemModule[id].video.height),
+      Number(videoJson.ItemModule[id].video.width),
+      Number(videoJson.ItemModule[id].video.duration),
+      videoJson.ItemModule[id].video.ratio,
+      videoJson.ItemModule[id].stats.shareCount,
+      videoJson.ItemModule[id].stats.diggCount,
+      videoJson.ItemModule[id].stats.commentCount,
+      videoJson.ItemModule[id].stats.playCount,
+      videoJson.ItemModule[id].video.cover,
+      videoJson.ItemModule[id].video.dynamicCover,
+      videoJson.ItemModule[id].video.playAddr.trim(),
+      videoJson.ItemModule[id].video.downloadAddr.trim(),
+      videoJson.ItemModule[id].video.format
     );
+
+    return videoResult;
   }
 
   /**
@@ -148,47 +132,66 @@ export class TikTokScraper {
     const $ = await this.requestWebsite(`https://www.tiktok.com/@${username}`);
     const grabInfoObject = $("#sigi-persisted-data").text();
 
-    this.handleHTMLContent("user", grabInfoObject);
-    const { user } = require(`${__dirname}/user.js`);
-    const userObject = user.UserModule.users[username];
+    const userJson = this.handleHTMLContent(grabInfoObject);
+    const userObject = userJson.UserModule.users[username];
 
-    const userResult: IUser = {
-      id: userObject.id,
-      uniqueId: userObject.uniqueId,
-      nickname: userObject.nickname,
-      avatar: userObject.avatarLarger,
-      signature: userObject.signature.trim(),
-      createdAt: new Date(userObject.createTime * 1000).toLocaleDateString(),
-      verified: userObject.verified,
-      secretUID: userObject.secUid,
-      bioLink: userObject?.bioLink?.link,
-      privateAccount: userObject.privateAccount,
-      isUnderAge18: userObject.isUnderAge18,
-      followers: user.UserModule.stats[username].followerCount,
-      following: user.UserModule.stats[username].followingCount,
-      hearts: user.UserModule.stats[username].heart,
-      videos: user.UserModule.stats[username].videoCount,
-    };
-
-    return new User(
-      userResult.id,
-      userResult.uniqueId,
-      userResult.nickname,
-      userResult.avatar,
-      userResult.signature,
-      userResult.createdAt,
-      userResult.verified,
-      userResult.secretUID,
-      userResult.bioLink,
-      userResult.privateAccount,
-      userResult.isUnderAge18,
-      userResult.followers,
-      userResult.following,
-      userResult.hearts,
-      userResult.videos
+    const userResult: IUser = new User(
+      userObject.id,
+      userObject.uniqueId,
+      userObject.nickname,
+      userObject.avatarLarger,
+      userObject.signature.trim(),
+      new Date(userObject.createTime * 1000).toLocaleDateString(),
+      userObject.verified,
+      userObject.secUid,
+      userObject?.bioLink?.link,
+      userObject.privateAccount,
+      userObject.isUnderAge18,
+      userJson.UserModule.stats[username].followerCount,
+      userJson.UserModule.stats[username].followingCount,
+      userJson.UserModule.stats[username].heart,
+      userJson.UserModule.stats[username].videoCount
     );
+    return userResult;
   }
 
-  async getAllVideosFromUser() {}
+  async getAllVideosFromUser(username: string): Promise<IVideo[]> {
+    if (!username) throw new Error("You must provide a username!");
+
+    const $ = await this.requestWebsite(`https://www.tiktok.com/@${username}`);
+    const userInfo = $("#sigi-persisted-data").text();
+
+    const userJsonObject = this.handleHTMLContent(userInfo);
+
+    const videos: IVideo[] = [];
+
+    const { ItemList } = userJsonObject;
+    ItemList["user-post"].list.forEach((id: string) => {
+      videos.push(
+        new Video(
+          userJsonObject.ItemModule[id].video.id,
+          userJsonObject.ItemModule[id].desc,
+          new Date(
+            Number(userJsonObject.ItemModule[id].createTime) * 1000
+          ).toLocaleDateString(),
+          Number(userJsonObject.ItemModule[id].video.height),
+          Number(userJsonObject.ItemModule[id].video.width),
+          Number(userJsonObject.ItemModule[id].video.duration),
+          userJsonObject.ItemModule[id].video.ratio,
+          userJsonObject.ItemModule[id].stats.shareCount,
+          userJsonObject.ItemModule[id].stats.diggCount,
+          userJsonObject.ItemModule[id].stats.commentCount,
+          userJsonObject.ItemModule[id].stats.playCount,
+          userJsonObject.ItemModule[id].video.cover,
+          userJsonObject.ItemModule[id].video.dynamicCover,
+          userJsonObject.ItemModule[id].video.playAddr.trim(),
+          userJsonObject.ItemModule[id].video.downloadAddr.trim(),
+          userJsonObject.ItemModule[id].video.format
+        )
+      );
+    });
+    return videos;
+  }
+
   async getMusic() {}
 }
