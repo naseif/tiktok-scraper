@@ -12,7 +12,7 @@ export interface ITikTokResult {
   likesCount: number;
   commentCount: number;
   playCount: number;
-  createdAt: Date;
+  createdAt: string;
   tiktokLink: string;
   thumbnail: string;
 }

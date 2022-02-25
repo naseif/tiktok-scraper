@@ -46,7 +46,7 @@ export class TikTokResult implements ITikTokResult {
   /**
    * When the video was created.
    */
-  createdAt: Date;
+  createdAt: string;
 
   /**
    * The absolute link of this video.
@@ -80,7 +80,7 @@ export class TikTokResult implements ITikTokResult {
     likesCount: number,
     commentCount: number,
     playCount: number,
-    tiktok_created_At: Date,
+    tiktok_created_At: string,
     tiktokLink: string,
     thumbnail: string
   ) {
