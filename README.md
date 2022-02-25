@@ -21,7 +21,7 @@ import { TTScraper } from "tiktok-scraper-ts"; // Individual classes
 ### JavaScript
 
 ```js
-const TTScraper = require("tiktok-scraper-ts");
+const tiktokscraper = require("tiktok-scraper-ts");
 
 const { TTScraper } = require("tiktok-scraper-ts"); // Individual classes
 ```
