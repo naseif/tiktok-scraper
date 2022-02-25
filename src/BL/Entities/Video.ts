@@ -46,6 +46,10 @@ export class Video implements IVideo {
    */
   playCount: number;
   /**
+   * a direct download url for the video
+   */
+  downloadURL: string;
+  /**
    * a direct url to the video cover
    */
   cover?: string | undefined;
@@ -57,10 +61,6 @@ export class Video implements IVideo {
    * a direct play url for the video
    */
   playURL?: string | undefined;
-  /**
-   * a direct download url for the video
-   */
-  downloadURL?: string | undefined;
   /**
    * the format of the video
    */
@@ -97,10 +97,10 @@ export class Video implements IVideo {
     likesCount: number,
     commentCount: number,
     playCount: number,
+    downloadURL: string,
     cover?: string | undefined,
     dynamicCover?: string | undefined,
     playURL?: string | undefined,
-    downloadURL?: string | undefined,
     format?: string | undefined
   ) {
     this.id = id;

@@ -4,6 +4,9 @@ import http from "node:http";
 import https from "node:https";
 import { IMusic, IVideo, IUser } from "../../Interfaces/index";
 import { User, Video, Music } from "../Entities";
+import { createWriteStream, existsSync, mkdirSync, unlinkSync } from "node:fs";
+import { exit } from "node:process";
+import miniget from "miniget";
 
 export class TTScraper {
   /**
@@ -184,10 +187,10 @@ export class TTScraper {
           userJsonObject.ItemModule[id].stats.diggCount,
           userJsonObject.ItemModule[id].stats.commentCount,
           userJsonObject.ItemModule[id].stats.playCount,
+          userJsonObject.ItemModule[id].video.downloadAddr.trim(),
           userJsonObject.ItemModule[id].video.cover,
           userJsonObject.ItemModule[id].video.dynamicCover,
           userJsonObject.ItemModule[id].video.playAddr.trim(),
-          userJsonObject.ItemModule[id].video.downloadAddr.trim(),
           userJsonObject.ItemModule[id].video.format
         )
       );
@@ -222,5 +225,54 @@ export class TTScraper {
     );
 
     return music;
+  }
+
+  /**
+   * Downloads all videos from a user page!
+   * @param username tiktok username of the user
+   * @param path the path where the videos should be downloaded. This is optional
+   */
+
+  async downloadAllVideosFromUser(username: string, path?: string) {
+    if (!username) throw new Error("Please enter a username!");
+
+    const getAllvideos = await this.getAllVideosFromUser(username);
+
+    if (!getAllvideos)
+      throw new Error(
+        "No Videos were found for this username. Either the videos are private or the user has not videos"
+      );
+
+    if (!path) {
+      path = __dirname + "/../../../" + username;
+      if (existsSync(path)) {
+        console.log(`A folder with this username exists, that is unusual!`);
+        try {
+          unlinkSync(path);
+        } catch (error: any) {
+          console.log(
+            `[ERROR] Could not remove ${path}\n Error Message: ${error.message}`
+          );
+          exit(1);
+        }
+      }
+
+      if (!existsSync(path)) {
+        mkdirSync(path);
+      }
+    }
+
+    getAllvideos.forEach((video, index) => {
+      console.log(
+        `Downloading Video: ${
+          video.description ? video.description : video.id
+        }, [${index + 1}/${getAllvideos.length}]`
+      );
+      miniget(video.downloadURL).pipe(
+        createWriteStream(
+          `${path}/${video.id}_${video.resolution}.${video.fomrat}`
+        )
+      );
+    });
   }
 }
