@@ -48,6 +48,10 @@ export interface IVideo {
    */
   playCount: number;
   /**
+   * a direct download url for the video
+   */
+  downloadURL: string;
+  /**
    * a direct url to the video cover
    */
   cover?: string;
@@ -59,10 +63,6 @@ export interface IVideo {
    * a direct play url for the video
    */
   playURL?: string;
-  /**
-   * a direct download url for the video
-   */
-  downloadURL?: string;
   /**
    * the format of the video
    */
