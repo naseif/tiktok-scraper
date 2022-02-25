@@ -1,5 +1,5 @@
 /**
- * Represents the audio of the video!
+ * Represents the music of the video!
  */
 
 export interface IMusic {
@@ -36,7 +36,7 @@ export interface IMusic {
    */
   original?: boolean;
   /**
-   * Whether it is part of an Album
+   * The Album name if it is part of an album
    */
   album?: string;
 }

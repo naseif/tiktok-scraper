@@ -153,6 +153,12 @@ export class TikTokScraper {
     return userResult;
   }
 
+  /**
+   * Scrapes a user page and returns a list of all videos for this user
+   * @param username tiktok username
+   * @returns IVideo[]
+   */
+
   async getAllVideosFromUser(username: string): Promise<IVideo[]> {
     if (!username) throw new Error("You must provide a username!");
 
@@ -191,6 +197,11 @@ export class TikTokScraper {
     return videos;
   }
 
+  /**
+   * Scrapes the given Link and returns information about the Music of the Video
+   * @param link Tiktok link of the video
+   * @returns Music
+   */
   async getMusic(link: string): Promise<Music> {
     if (!link) throw new Error("You must provide a link!");
 

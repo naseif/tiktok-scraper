@@ -2,7 +2,7 @@ import { IMusic } from "../../Interfaces/IMusic";
 
 export class Music implements IMusic {
   /**
-   * tiktok music ic
+   * tiktok music id
    */
   id: number;
   /**
@@ -10,7 +10,7 @@ export class Music implements IMusic {
    */
   title: string;
   /**
-   * direct link to this music
+   * direct link to the music
    */
   playURL: string;
   /**
@@ -34,10 +34,22 @@ export class Music implements IMusic {
    */
   original?: boolean;
   /**
-   * Whether it is part of an Album
+   * The Album name if it is part of an album
    */
   album?: string;
 
+  /**
+   *
+   * @param id tiktok music id
+   * @param title tiktok music title
+   * @param playURL direct link to the music
+   * @param coverLarge tiktok music original cover
+   * @param coverThumb tiktok music thumnail cover
+   * @param author tiktok music author
+   * @param duration tiktok music duration
+   * @param original Whether the music is original or user made
+   * @param album The Album name if it is part of an album
+   */
   constructor(
     id: number,
     title: string,
