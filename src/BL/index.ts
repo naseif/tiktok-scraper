@@ -1,2 +1,2 @@
-export { TikTokScraper } from "./Scrapers/TikTokScraper";
+export { TTScraper } from "./Scrapers/TikTokScraper";
 export * from "./Entities";

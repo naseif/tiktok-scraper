@@ -5,9 +5,7 @@ import https from "node:https";
 import { IMusic, IVideo, IUser } from "../../Interfaces/index";
 import { User, Video, Music } from "../Entities";
 
-export type HTTPMethods = "get" | "post" | "put" | "delete" | "patch";
-
-export class TikTokScraper {
+export class TTScraper {
   /**
    *  Fetches the website content and convert its content into text.
    * @param baseUrl baseUrl of the site to fetch
