@@ -1,6 +1,6 @@
 {
   "name": "tiktok-scraper-ts",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "A scraper for tiktok videos",
   "main": "dist/main.js",
   "scripts": {
@@ -16,6 +16,14 @@
   "bugs": {
     "url": "https://github.com/naseif/tiktok-scraper/issues"
   },
+  "keywords": [
+    "tiktok-videos-downloader",
+    "tiktok-video-downloader",
+    "tiktok-scraper",
+    "tiktok-downloader",
+    "tiktok-api",
+    "tiktok-videos-scraper"
+  ],
   "homepage": "https://github.com/naseif/tiktok-scraper#readme",
   "devDependencies": {
     "@types/node": "^17.0.21",
