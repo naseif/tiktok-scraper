@@ -1,5 +1,5 @@
 {
-  "name": "tiktok-videos-scraper",
+  "name": "tiktok-scraper",
   "version": "1.0.0",
   "description": "A scraper for tiktok videos",
   "main": "dist/main.js",
@@ -9,14 +9,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/naseif/tiktok-videos-scraper.git"
+    "url": "git+https://github.com/naseif/tiktok-scraper.git"
   },
   "author": "naseif",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/naseif/tiktok-videos-scraper/issues"
+    "url": "https://github.com/naseif/tiktok-scraper/issues"
   },
-  "homepage": "https://github.com/naseif/tiktok-videos-scraper#readme",
+  "homepage": "https://github.com/naseif/tiktok-scraper#readme",
   "devDependencies": {
     "@types/node": "^17.0.21",
     "@types/node-fetch": "^2.6.1",
