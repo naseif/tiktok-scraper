@@ -1,2 +1,3 @@
-# tiktok-videos-scraper
-A scraper for tiktok videos 
+# tiktok-scraper
+
+A light-weight scraper for tiktok written in TypeScript
