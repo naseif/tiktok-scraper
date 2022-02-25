@@ -1,4 +1,4 @@
-import { IAudio, IAuthor, IVideo } from "./index";
+import { IMusic, IAuthor, IVideo } from "./index";
 
 /**
  * The Result of the Scraping process
@@ -7,7 +7,7 @@ import { IAudio, IAuthor, IVideo } from "./index";
 export interface ITikTokResult {
   author: IAuthor;
   video: IVideo;
-  audio: IAudio;
+  audio: IMusic;
   shareCount: number;
   likesCount: number;
   commentCount: number;

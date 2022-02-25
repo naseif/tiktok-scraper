@@ -1,4 +1,4 @@
-import { IAuthor, IVideo, IAudio, ITikTokResult } from "../../Interfaces/index";
+import { IAuthor, IVideo, IMusic, ITikTokResult } from "../../Interfaces/index";
 
 /**
  * TikTok Result Class Template
@@ -21,7 +21,7 @@ export class TikTokResult implements ITikTokResult {
    * Represents the IAudio interface.
    */
 
-  audio: IAudio;
+  audio: IMusic;
 
   /**
    * Number of shares for this video.
@@ -75,7 +75,7 @@ export class TikTokResult implements ITikTokResult {
   constructor(
     author: IAuthor,
     video: IVideo,
-    audio: IAudio,
+    audio: IMusic,
     shareCount: number,
     likesCount: number,
     commentCount: number,

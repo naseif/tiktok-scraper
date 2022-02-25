@@ -2,10 +2,8 @@ import fetch, { RequestInit } from "node-fetch";
 import * as cheerio from "cheerio";
 import http from "node:http";
 import https from "node:https";
-import { IVideo } from "../../Interfaces/index";
-import { IUser } from "../../Interfaces/IUser";
-import { User } from "../Entities/User";
-import { Video } from "../Entities/Video";
+import { IMusic, IVideo, IUser } from "../../Interfaces/index";
+import { User, Video, Music } from "../Entities";
 
 export type HTTPMethods = "get" | "post" | "put" | "delete" | "patch";
 
@@ -193,5 +191,27 @@ export class TikTokScraper {
     return videos;
   }
 
-  async getMusic() {}
+  async getMusic(link: string): Promise<Music> {
+    if (!link) throw new Error("You must provide a link!");
+
+    const $ = await this.requestWebsite(link);
+    const infoObject = $("#sigi-persisted-data").text();
+
+    const audioObject = this.handleHTMLContent(infoObject);
+    const id = audioObject.ItemList.video.list[0];
+
+    const music: IMusic = new Music(
+      audioObject.ItemModule[id].music.id,
+      audioObject.ItemModule[id].music.title,
+      audioObject.ItemModule[id].music.playUrl,
+      audioObject.ItemModule[id].music.coverLarge,
+      audioObject.ItemModule[id].music.coverThumb,
+      audioObject.ItemModule[id].music.authorName,
+      Number(audioObject.ItemModule[id].music.duration),
+      audioObject.ItemModule[id].music.original,
+      audioObject.ItemModule[id].music.album
+    );
+
+    return music;
+  }
 }
