@@ -233,7 +233,13 @@ export class TTScraper {
    * @param path the path where the videos should be downloaded. This is optional
    */
 
-  async downloadAllVideosFromUser(username: string, path?: string) {
+  async downloadAllVideosFromUser(
+    username: string,
+    options: {
+      path?: string;
+      watermark?: boolean;
+    }
+  ) {
     if (!username) throw new Error("Please enter a username!");
 
     const getAllvideos = await this.getAllVideosFromUser(username);
@@ -243,22 +249,22 @@ export class TTScraper {
         "No Videos were found for this username. Either the videos are private or the user has not videos"
       );
 
-    if (!path) {
-      path = __dirname + "/../../../" + username;
-      if (existsSync(path)) {
+    if (!options.path) {
+      options.path = __dirname + "/../../../" + username;
+      if (existsSync(options.path)) {
         console.log(`A folder with this username exists, that is unusual!`);
         try {
-          unlinkSync(path);
+          unlinkSync(options.path);
         } catch (error: any) {
           console.log(
-            `[ERROR] Could not remove ${path}\n Error Message: ${error.message}`
+            `[ERROR] Could not remove ${options.path}\n Error Message: ${error.message}`
           );
           exit(1);
         }
       }
 
-      if (!existsSync(path)) {
-        mkdirSync(path);
+      if (!existsSync(options.path)) {
+        mkdirSync(options.path);
       }
     }
 
@@ -270,9 +276,55 @@ export class TTScraper {
       );
       miniget(video.downloadURL).pipe(
         createWriteStream(
-          `${path}/${video.id}_${video.resolution}.${video.fomrat}`
+          `${options.path}/${video.id}_${video.resolution}.${video.fomrat}`
         )
       );
     });
+  }
+
+  async noWaterMark(link: string) {
+    const fetchtt = await fetch("https://ttdownloader.com/", {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36 Edg/97.0.1072.62",
+      },
+    });
+
+    const res = await fetchtt.text();
+
+    const $ = cheerio.load(res);
+    const cookies = fetchtt.headers.get("set-cookie");
+
+    const postData = {
+      url: link,
+      format: "",
+      token: $("#token").attr("value"),
+    };
+
+    const qs = new URLSearchParams();
+
+    for (const [key, value] of Object.entries(postData)) {
+      // @ts-expect-error
+      qs.append(key, value);
+    }
+
+    const postOptions = {
+      method: "POST",
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36 Edg/97.0.1072.62",
+        "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+        cookie: cookies,
+      },
+      body: qs,
+    };
+
+    // @ts-expect-error
+    const postLink = await fetch("https://ttdownloader.com/req/", postOptions);
+    const postResult = cheerio.load(await postLink.text());
+
+    return postResult(
+      "#results-list > div:nth-child(2) > div.download > a"
+    )?.attr("href");
   }
 }
