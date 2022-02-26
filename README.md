@@ -34,6 +34,7 @@ const { TTScraper } = require("tiktok-scraper-ts"); // Individual classes
 .getAllVideosFromUser(username) Scrapes all available videos for the given user. Returns Promise<IVideo[]>
 .getMusic(url) Scrapes Music info from a video. Returns Promise<Music>
 .downloadAllVideosFromUser(username, path?: optional) Downloads all Videos of the given user. Returns Promise<void>
+.noWaterMark(link) Returns a direct download link for the video without TikTok Watermark.
 ```
 
 ## Examples
