@@ -66,5 +66,5 @@ export interface IVideo {
   /**
    * the format of the video
    */
-  fomrat?: string;
+  format?: string;
 }

@@ -64,7 +64,7 @@ export class Video implements IVideo {
   /**
    * the format of the video
    */
-  fomrat?: string | undefined;
+  format?: string | undefined;
 
   /**
    *
@@ -114,10 +114,10 @@ export class Video implements IVideo {
     this.likesCount = likesCount;
     this.commentCount = commentCount;
     this.playCount = playCount;
+    this.downloadURL = downloadURL;
     this.cover = cover;
     this.dynamicCover = dynamicCover;
     this.playURL = playURL;
-    this.downloadURL = downloadURL;
-    this.fomrat = format;
+    this.format = format;
   }
 }

@@ -109,10 +109,10 @@ export class TTScraper {
       videoJson.ItemModule[id].stats.diggCount,
       videoJson.ItemModule[id].stats.commentCount,
       videoJson.ItemModule[id].stats.playCount,
+      videoJson.ItemModule[id].video.downloadAddr.trim(),
       videoJson.ItemModule[id].video.cover,
       videoJson.ItemModule[id].video.dynamicCover,
       videoJson.ItemModule[id].video.playAddr.trim(),
-      videoJson.ItemModule[id].video.downloadAddr.trim(),
       videoJson.ItemModule[id].video.format
     );
 
@@ -276,13 +276,19 @@ export class TTScraper {
       );
       miniget(video.downloadURL).pipe(
         createWriteStream(
-          `${options.path}/${video.id}_${video.resolution}.${video.fomrat}`
+          `${options.path}/${video.id}_${video.resolution}.${video.format}`
         )
       );
     });
   }
 
-  async noWaterMark(link: string) {
+  /**
+   * Returns direct download link for the video with no watermark!
+   * @param link tiktok video link
+   * @returns string
+   */
+
+  async noWaterMark(link: string): Promise<string | undefined> {
     const fetchtt = await fetch("https://ttdownloader.com/", {
       headers: {
         "User-Agent":
