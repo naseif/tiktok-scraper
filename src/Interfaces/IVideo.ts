@@ -67,4 +67,8 @@ export interface IVideo {
    * the format of the video
    */
   format?: string;
+  /**
+   * Author of the Video
+   */
+  author?: string;
 }

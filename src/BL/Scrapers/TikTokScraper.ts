@@ -94,10 +94,9 @@ export class TTScraper {
     const videoJson = this.handleHTMLContent(videoObject);
 
     const id = videoJson.ItemList.video.list[0];
-
     const videoResult: IVideo = new Video(
       videoJson.ItemModule[id].video.id,
-      videoJson.ItemModule[id].video.desc,
+      videoJson.ItemModule[id].desc,
       new Date(
         Number(videoJson.ItemModule[id].createTime) * 1000
       ).toLocaleDateString(),
@@ -113,7 +112,8 @@ export class TTScraper {
       videoJson.ItemModule[id].video.cover,
       videoJson.ItemModule[id].video.dynamicCover,
       videoJson.ItemModule[id].video.playAddr.trim(),
-      videoJson.ItemModule[id].video.format
+      videoJson.ItemModule[id].video.format,
+      videoJson.ItemModule[id].nickname
     );
 
     return videoResult;
