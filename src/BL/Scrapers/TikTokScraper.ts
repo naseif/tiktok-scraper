@@ -10,22 +10,21 @@ import miniget from "miniget";
 
 export class TTScraper {
   /**
-   *  Fetches the website content and convert its content into text.
+   * Fetches the website content and convert its content into text.
    * @param baseUrl baseUrl of the site to fetch
-   * @param searchQuery string of the product you wish to search for
+   * @param fetchOptions node-fetch fetch options. Optional
    * @returns Promise<cheerio.CheerioAPI>
-   *
-   * Example:
-   * ```ts
-   * const $ = await requestWebsite("https://www.amazon.de/s?k=" + "airpods")
-   * // => will return cheerio API Object to work with.
-   *
-   * $(".prices").each((_, value) => {
-   *     console.log($(value).text().trim());
-   * });
-   * ```
+  
+  Example:
+  ```ts
+  const $ = await requestWebsite("https://www.amazon.de/s?k=" + "airpods")
+  // => will return cheerio API Object to work with.
+  
+  $(".prices").each((_, value) => {
+  console.log($(value).text().trim());
+  });
+  ```
    */
-
   private async requestWebsite(baseUrl: string, fetchOptions?: RequestInit) {
     const httpAgent = new http.Agent({
       keepAlive: true,
@@ -230,7 +229,7 @@ export class TTScraper {
   /**
    * Downloads all videos from a user page!
    * @param username tiktok username of the user
-   * @param path the path where the videos should be downloaded. This is optional
+   * @param options download options
    */
 
   async downloadAllVideosFromUser(
@@ -288,49 +287,19 @@ export class TTScraper {
    * @returns string
    */
 
-  async noWaterMark(link: string): Promise<string | undefined> {
-    const fetchtt = await fetch("https://ttdownloader.com/", {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36 Edg/97.0.1072.62",
-      },
-    });
+  async noWaterMark(link: string): Promise<string | undefined | void> {
+    const { id } = await this.video(link);
+    const fetchNoWaterInfo = await fetch(
+      "https://api2.musical.ly/aweme/v1/aweme/detail/?aweme_id=" + id
+    );
+    const noWaterJson = await fetchNoWaterInfo.json();
+    if (!noWaterJson) return;
+    const noWaterMarkID = noWaterJson.aweme_detail.video.download_addr.uri;
+    if (!noWaterMarkID)
+      return console.error(
+        "There was an Error retrieveing this video without watermark!"
+      );
 
-    const res = await fetchtt.text();
-
-    const $ = cheerio.load(res);
-    const cookies = fetchtt.headers.get("set-cookie");
-
-    const postData = {
-      url: link,
-      format: "",
-      token: $("#token").attr("value"),
-    };
-
-    const qs = new URLSearchParams();
-
-    for (const [key, value] of Object.entries(postData)) {
-      // @ts-expect-error
-      qs.append(key, value);
-    }
-
-    const postOptions = {
-      method: "POST",
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36 Edg/97.0.1072.62",
-        "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-        cookie: cookies,
-      },
-      body: qs,
-    };
-
-    // @ts-expect-error
-    const postLink = await fetch("https://ttdownloader.com/req/", postOptions);
-    const postResult = cheerio.load(await postLink.text());
-
-    return postResult(
-      "#results-list > div:nth-child(2) > div.download > a"
-    )?.attr("href");
+    return `https://api-h2.tiktokv.com/aweme/v1/play/?video_id=${noWaterMarkID}`;
   }
 }
