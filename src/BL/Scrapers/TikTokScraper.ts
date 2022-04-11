@@ -80,7 +80,7 @@ export class TTScraper {
 
   /**
    * Scrapes the tiktok video info from the given Link
-   * @param uri the tiktok video to scrape
+   * @param uri tiktok video url
    * @returns Video
    */
 
@@ -199,7 +199,7 @@ export class TTScraper {
 
   /**
    * Scrapes the given Link and returns information about the Music of the Video
-   * @param link Tiktok link of the video
+   * @param link tiktok video url
    * @returns Music
    */
   async getMusic(link: string): Promise<Music> {
@@ -283,7 +283,7 @@ export class TTScraper {
 
   /**
    * Returns direct download link for the video with no watermark!
-   * @param link tiktok video link
+   * @param link tiktok video url
    * @returns string
    */
 
@@ -293,10 +293,15 @@ export class TTScraper {
       "https://api2.musical.ly/aweme/v1/aweme/detail/?aweme_id=" + id
     );
     const noWaterJson = await fetchNoWaterInfo.json();
-    if (!noWaterJson) return;
+    if (!noWaterJson)
+      throw new Error(
+        "There was an Error retrieveing this video without watermark!"
+      );
+
     const noWaterMarkID = noWaterJson.aweme_detail.video.download_addr.uri;
+
     if (!noWaterMarkID)
-      return console.error(
+      throw new Error(
         "There was an Error retrieveing this video without watermark!"
       );
 
