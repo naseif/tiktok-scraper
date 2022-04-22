@@ -1,12 +1,12 @@
 {
   "name": "tiktok-scraper-ts",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "description": "A scraper for tiktok videos, users and more",
   "main": "dist/main.js",
   "scripts": {
     "start": "tsc && node dist/main.js",
     "build:docs": "npx typedoc src/main.ts",
-    "build:lib": "npx tsup src/main.ts --dts-resolve"
+    "build:lib": "npx tsup src/main.ts --dts-resolve --minify"
   },
   "repository": {
     "type": "git",
@@ -29,7 +29,6 @@
   "devDependencies": {
     "@types/node": "^17.0.21",
     "@types/node-fetch": "^2.6.1",
-    "ts-node": "^10.5.0",
     "tsup": "^5.12.0",
     "typedoc": "^0.22.12",
     "typescript": "^4.5.5"

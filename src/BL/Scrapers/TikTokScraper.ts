@@ -88,9 +88,9 @@ export class TTScraper {
     if (!uri) throw new Error("A video URL must be provided");
 
     const $ = await this.requestWebsite(uri);
-    const videoObject = $("#sigi-persisted-data").text();
+    const videoObject = $("#SIGI_STATE").text();
 
-    const videoJson = this.handleHTMLContent(videoObject);
+    const videoJson = JSON.parse(videoObject);
 
     const id = videoJson.ItemList.video.list[0];
     const videoResult: IVideo = new Video(
@@ -128,9 +128,9 @@ export class TTScraper {
     if (!username) throw new Error("Please enter a username");
 
     const $ = await this.requestWebsite(`https://www.tiktok.com/@${username}`);
-    const grabInfoObject = $("#sigi-persisted-data").text();
+    const grabInfoObject = $("#SIGI_STATE").text();
 
-    const userJson = this.handleHTMLContent(grabInfoObject);
+    const userJson = JSON.parse(grabInfoObject);
     const userObject = userJson.UserModule.users[username];
 
     const userResult: IUser = new User(
@@ -163,9 +163,9 @@ export class TTScraper {
     if (!username) throw new Error("You must provide a username!");
 
     const $ = await this.requestWebsite(`https://www.tiktok.com/@${username}`);
-    const userInfo = $("#sigi-persisted-data").text();
+    const userInfo = $("#SIGI_STATE").text();
 
-    const userJsonObject = this.handleHTMLContent(userInfo);
+    const userJsonObject = JSON.parse(userInfo);
 
     const videos: IVideo[] = [];
 
@@ -206,9 +206,9 @@ export class TTScraper {
     if (!link) throw new Error("You must provide a link!");
 
     const $ = await this.requestWebsite(link);
-    const infoObject = $("#sigi-persisted-data").text();
+    const infoObject = $("#SIGI_STATE").text();
 
-    const audioObject = this.handleHTMLContent(infoObject);
+    const audioObject = JSON.parse(infoObject);
     const id = audioObject.ItemList.video.list[0];
 
     const music: IMusic = new Music(
