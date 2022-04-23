@@ -64,6 +64,7 @@ export class TTScraper {
    * Replaces the window Object with a export string and writes the new JS file to work with the result as a JS Object
    * @param type type of the data you are handling.
    * @param content the HTML content of the Page
+   * @deprecated No need for this function anymore since Tiktok now adds the json directly to the html
    */
 
   private handleHTMLContent(content: string) {

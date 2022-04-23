@@ -26,7 +26,7 @@ const tiktokscraper = require("tiktok-scraper-ts");
 const { TTScraper } = require("tiktok-scraper-ts"); // Individual classes
 ```
 
-## Methods
+## Class Methods
 
 ```ts
 .video(url) scrapes video info and download link. Returns Promise<Video>
@@ -35,6 +35,20 @@ const { TTScraper } = require("tiktok-scraper-ts"); // Individual classes
 .getMusic(url) Scrapes Music info from a video. Returns Promise<Music>
 .downloadAllVideosFromUser(username, path?: optional) Downloads all Videos of the given user. Returns Promise<void>
 .noWaterMark(link) Returns a direct download link for the video without TikTok Watermark.
+```
+
+## Individual Functions
+
+Since 1.2.6 you can also import functions directly
+
+### API
+
+```ts
+fetchVideo(url); // Same as TTScraper.video(url)
+fetchUser(username); // Same as TTScraper.user(username)
+fetchAllVideosFromUser(username); // Same as TTScraper.getAllVideosFromUser(username)
+fetchMusic(url); // Same as TTScraper.getMusic(url)
+fetchVideoNoWaterMark(url); // Same as TTScraper.noWaterMark(url)
 ```
 
 ## Examples
@@ -49,6 +63,15 @@ const TikTokScraper = new TTScraper();
 (async () => {
   const fetchVideo = await TikTokScraper.video("link");
   console.log(fetchVideo);
+})();
+
+// OR
+
+import { fetchVideo } from "tiktok-scraper-ts";
+
+(async () => {
+  const video = await fetchVideo("link");
+  console.log(video);
 })();
 
 // ==>
@@ -83,6 +106,15 @@ const TikTokScraper = new TTScraper();
 (async () => {
   const fetchUser = await TikTokScraper.user("user");
   console.log(fetchUser);
+})();
+
+// OR
+
+import { fetchUser } from "tiktok-scraper-ts";
+
+(async () => {
+  const user = await fetchUser("link");
+  console.log(user);
 })();
 
 // ==>
