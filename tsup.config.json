@@ -1,0 +1,16 @@
+{
+    "clean": true,
+    "dts": true,
+    "entryPoints": [
+        "src/main.ts"
+    ],
+    "format": [
+        "esm",
+        "cjs"
+    ],
+    "minify": true,
+    "skipNodeModulesBundle": true,
+    "target": "es2021",
+    "splitting": false,
+    "keepNames": true
+}

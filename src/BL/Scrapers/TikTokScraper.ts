@@ -250,7 +250,7 @@ export class TTScraper {
       );
 
     if (!options.path) {
-      options.path = __dirname + "/../../../" + username;
+      options.path = `${__dirname}/../${username}`
       if (existsSync(options.path)) {
         console.log(`A folder with this username exists, that is unusual!`);
         try {
@@ -268,18 +268,47 @@ export class TTScraper {
       }
     }
 
-    getAllvideos.forEach((video, index) => {
+
+    if (!options.watermark) {
+
+      for (const [index, video] of getAllvideos.entries()) {
+
+        console.log(
+          `Downloading Video: ${video.description ? video.description : video.id
+          }, [${index + 1}/${getAllvideos.length}]`
+        );
+
+        let noWaterMarkLink = await this.noWaterMark(video.id)
+
+        if (!noWaterMarkLink) {
+          console.log(`Could not fetch ${video.description ? video.description : video.id
+            } with no watermark`)
+          continue
+        }
+
+        miniget(noWaterMarkLink).pipe(
+          createWriteStream(
+            `${options.path}/${video.id}_${video.resolution}.${video.format}`
+          )
+        );
+      }
+      return;
+    }
+
+    for (const [index, video] of getAllvideos.entries()) {
+
       console.log(
-        `Downloading Video: ${
-          video.description ? video.description : video.id
+        `Downloading Video: ${video.description ? video.description : video.id
         }, [${index + 1}/${getAllvideos.length}]`
       );
+
       miniget(video.downloadURL).pipe(
         createWriteStream(
           `${options.path}/${video.id}_${video.resolution}.${video.format}`
         )
       );
-    });
+    }
+
   }
 
   /**
@@ -289,7 +318,14 @@ export class TTScraper {
    */
 
   async noWaterMark(link: string): Promise<string | undefined | void> {
-    const { id } = await this.video(link);
+    let id: string = ""
+
+    if (link.startsWith("https")) {
+      id = (await this.video(link)).id
+    } else {
+      id = link
+    }
+
     const fetchNoWaterInfo = await fetch(
       "https://api2.musical.ly/aweme/v1/aweme/detail/?aweme_id=" + id
     );
