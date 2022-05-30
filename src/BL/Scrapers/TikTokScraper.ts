@@ -250,7 +250,7 @@ export class TTScraper {
       );
 
     if (!options.path) {
-      options.path = `${__dirname}/../${username}`
+      options.path = `${__dirname}/../${username}`;
       if (existsSync(options.path)) {
         console.log(`A folder with this username exists, that is unusual!`);
         try {
@@ -268,22 +268,23 @@ export class TTScraper {
       }
     }
 
-
     if (!options.watermark) {
-
       for (const [index, video] of getAllvideos.entries()) {
-
         console.log(
-          `Downloading Video: ${video.description ? video.description : video.id
+          `Downloading Video: ${
+            video.description ? video.description : video.id
           }, [${index + 1}/${getAllvideos.length}]`
         );
 
-        let noWaterMarkLink = await this.noWaterMark(video.id)
+        let noWaterMarkLink = await this.noWaterMark(video.id);
 
         if (!noWaterMarkLink) {
-          console.log(`Could not fetch ${video.description ? video.description : video.id
-            } with no watermark`)
-          continue
+          console.log(
+            `Could not fetch ${
+              video.description ? video.description : video.id
+            } with no watermark`
+          );
+          continue;
         }
 
         miniget(noWaterMarkLink).pipe(
@@ -296,9 +297,9 @@ export class TTScraper {
     }
 
     for (const [index, video] of getAllvideos.entries()) {
-
       console.log(
-        `Downloading Video: ${video.description ? video.description : video.id
+        `Downloading Video: ${
+          video.description ? video.description : video.id
         }, [${index + 1}/${getAllvideos.length}]`
       );
 
@@ -308,7 +309,6 @@ export class TTScraper {
         )
       );
     }
-
   }
 
   /**
@@ -318,12 +318,12 @@ export class TTScraper {
    */
 
   async noWaterMark(link: string): Promise<string | undefined | void> {
-    let id: string = ""
+    let id: string = "";
 
     if (link.startsWith("https")) {
-      id = (await this.video(link)).id
+      id = (await this.video(link)).id;
     } else {
-      id = link
+      id = link;
     }
 
     const fetchNoWaterInfo = await fetch(
@@ -343,5 +343,45 @@ export class TTScraper {
       );
 
     return `https://api-h2.tiktokv.com/aweme/v1/play/?video_id=${noWaterMarkID}`;
+  }
+
+  async hashTag(tag: string): Promise<IVideo[]> {
+    if (!tag)
+      throw new Error("You must provide a tag name to complete the search!");
+
+    const $ = await this.requestWebsite(`https://www.tiktok.com/tag/${tag}`);
+    const parseTagResult = $("#SIGI_STATE").text();
+
+    const tagJSON = JSON.parse(parseTagResult);
+
+    const { ItemList } = tagJSON;
+
+    const videos: IVideo[] = [];
+
+    for (const video of ItemList.challenge.list) {
+      videos.push(
+        new Video(
+          tagJSON.ItemModule[video].video.id,
+          tagJSON.ItemModule[video].desc,
+          new Date(
+            Number(tagJSON.ItemModule[video].createTime) * 1000
+          ).toLocaleDateString(),
+          Number(tagJSON.ItemModule[video].video.height),
+          Number(tagJSON.ItemModule[video].video.width),
+          Number(tagJSON.ItemModule[video].video.duration),
+          tagJSON.ItemModule[video].video.ratio,
+          tagJSON.ItemModule[video].stats.shareCount,
+          tagJSON.ItemModule[video].stats.diggCount,
+          tagJSON.ItemModule[video].stats.commentCount,
+          tagJSON.ItemModule[video].stats.playCount,
+          tagJSON.ItemModule[video].video.downloadAddr.trim(),
+          tagJSON.ItemModule[video].video.cover,
+          tagJSON.ItemModule[video].video.dynamicCover,
+          tagJSON.ItemModule[video].video.playAddr.trim(),
+          tagJSON.ItemModule[video].video.format
+        )
+      );
+    }
+    return videos;
   }
 }
