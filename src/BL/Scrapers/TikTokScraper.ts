@@ -1,12 +1,13 @@
-import fetch, { RequestInit } from "node-fetch";
-import * as cheerio from "cheerio";
-import http from "node:http";
-import https from "node:https";
-import { IMusic, IVideo, IUser } from "../../Interfaces/index";
-import { User, Video, Music } from "../Entities";
-import { createWriteStream, existsSync, mkdirSync, unlinkSync } from "node:fs";
-import { exit } from "node:process";
-import miniget from "miniget";
+import * as cheerio from 'cheerio';
+import miniget from 'miniget';
+import fetch, { RequestInit } from 'node-fetch';
+import { createWriteStream, existsSync, mkdirSync, unlinkSync } from 'node:fs';
+import http from 'node:http';
+import https from 'node:https';
+import { exit } from 'node:process';
+
+import { IMusic, IUser, IVideo } from '../../Interfaces';
+import { Music, User, Video } from '../Entities';
 
 export class TTScraper {
   /**
@@ -378,7 +379,8 @@ export class TTScraper {
           tagJSON.ItemModule[video].video.cover,
           tagJSON.ItemModule[video].video.dynamicCover,
           tagJSON.ItemModule[video].video.playAddr.trim(),
-          tagJSON.ItemModule[video].video.format
+          tagJSON.ItemModule[video].video.format,
+          tagJSON.ItemModule[video].author,
         )
       );
     }
