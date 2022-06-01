@@ -1,13 +1,12 @@
-import * as cheerio from 'cheerio';
-import miniget from 'miniget';
-import fetch, { RequestInit } from 'node-fetch';
-import { createWriteStream, existsSync, mkdirSync, unlinkSync } from 'node:fs';
-import http from 'node:http';
-import https from 'node:https';
-import { exit } from 'node:process';
-
-import { IMusic, IUser, IVideo } from '../../Interfaces';
-import { Music, User, Video } from '../Entities';
+import * as cheerio from "cheerio";
+import miniget from "miniget";
+import fetch, { RequestInit } from "node-fetch";
+import { createWriteStream, existsSync, mkdirSync, unlinkSync } from "node:fs";
+import http from "node:http";
+import https from "node:https";
+import { exit } from "node:process";
+import { IMusic, IUser, IVideo } from "../../Interfaces";
+import { Music, User, Video } from "../Entities";
 
 export class TTScraper {
   /**
@@ -63,7 +62,6 @@ export class TTScraper {
 
   /**
    * Replaces the window Object with a export string and writes the new JS file to work with the result as a JS Object
-   * @param type type of the data you are handling.
    * @param content the HTML content of the Page
    * @deprecated No need for this function anymore since Tiktok now adds the json directly to the html
    */
@@ -346,6 +344,12 @@ export class TTScraper {
     return `https://api-h2.tiktokv.com/aweme/v1/play/?video_id=${noWaterMarkID}`;
   }
 
+  /**
+   * Scrapes a hashtag posts
+   * @param tag tiktok hashtag
+   * @returns Promise<IVideo[]>
+   */
+
   async hashTag(tag: string): Promise<IVideo[]> {
     if (!tag)
       throw new Error("You must provide a tag name to complete the search!");
@@ -380,7 +384,7 @@ export class TTScraper {
           tagJSON.ItemModule[video].video.dynamicCover,
           tagJSON.ItemModule[video].video.playAddr.trim(),
           tagJSON.ItemModule[video].video.format,
-          tagJSON.ItemModule[video].author,
+          tagJSON.ItemModule[video].author
         )
       );
     }

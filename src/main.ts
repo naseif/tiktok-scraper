@@ -58,5 +58,17 @@ export async function fetchVideoNoWaterMark(url: string) {
   return await new TTScraper().noWaterMark(url);
 }
 
+/**
+ * Scrapes a hashtag posts
+ * @param tag tiktok hashtag
+ * @returns Promise<IVideo[]>
+ */
+
+export async function hashtag(tag: string) {
+  if (!tag) throw new Error(`You must provide a tiktok hashtag`);
+
+  return await new TTScraper().hashTag(tag);
+}
+
 export * from "./BL";
 export * from "./Interfaces";

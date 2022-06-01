@@ -35,6 +35,7 @@ const { TTScraper } = require("tiktok-scraper-ts"); // Individual classes
 .getMusic(url) Scrapes Music info from a video. Returns Promise<Music>
 .downloadAllVideosFromUser(username, path?: optional) Downloads all Videos of the given user. Returns Promise<void>
 .noWaterMark(link) Returns a direct download link for the video without TikTok Watermark.
+.hashtag(tag) Scrapes a hashtag posts
 ```
 
 ## Individual Functions
@@ -49,6 +50,7 @@ fetchUser(username); // Same as TTScraper.user(username)
 fetchAllVideosFromUser(username); // Same as TTScraper.getAllVideosFromUser(username)
 fetchMusic(url); // Same as TTScraper.getMusic(url)
 fetchVideoNoWaterMark(url); // Same as TTScraper.noWaterMark(url)
+hashtag(tag); // Same as TTScraper.hashtag(tag)
 ```
 
 ## Examples
