@@ -10,10 +10,10 @@ import { IMusic, IUser, IVideo } from "../../Interfaces";
 import { Music, User, Video } from "../Entities";
 
 export class TTScraper {
-  _cookies: string = ""
+  _cookies?: string = "";
 
   constructor(cookies?: string) {
-    cookies = this._cookies
+    this._cookies = cookies;
   }
   /**
    * Fetches the website content and convert its content into text.
@@ -56,7 +56,7 @@ export class TTScraper {
         "Accept-Encoding": "gzip, deflate, br",
         "Cache-Control": "no-cache",
         Connection: "keep-alive",
-        Cookie: `${this._cookies}`
+        Cookie: `${this._cookies}`,
       },
     };
 
@@ -74,7 +74,7 @@ export class TTScraper {
   /**
    * Extract the JSON Object from the DOM with JavaScript instead of cheerio
    * @param html string
-   * @returns 
+   * @returns
    */
 
   private extractJSONObject(html: string) {
@@ -84,27 +84,27 @@ export class TTScraper {
 
     const InfoObject = html
       .split(`<script id="SIGI_STATE" type="application/json">`)[1]
-      .slice(0, endofJson)
+      .slice(0, endofJson);
 
     return InfoObject;
   }
 
   /**
-   * Trys to parse the JSON Object extracted from the Page HTML 
+   * Trys to parse the JSON Object extracted from the Page HTML
    * @param content HTML DOM Content
-   * @returns 
+   * @returns
    */
 
   private checkJSONExisting(content: string) {
     try {
-      return JSON.parse(content) ? true : false
-    } catch (error) { }
+      return JSON.parse(content) ? true : false;
+    } catch (error) {}
   }
 
   /**
    * Does Tiktok Requests with headless chrome
-   * @param url 
-   * @returns 
+   * @param url
+   * @returns
    */
 
   private async requestWithPuppeteer(url: string) {
@@ -145,8 +145,8 @@ export class TTScraper {
 
   /**
    * Checker to use Node-fetch over puppteer in case cookies were not required since it happens randomly
-   * @param link 
-   * @returns 
+   * @param link
+   * @returns
    */
 
   async TryFetch(link: string) {
@@ -184,10 +184,14 @@ export class TTScraper {
       videoObject.ItemModule[id].stats.diggCount,
       videoObject.ItemModule[id].stats.commentCount,
       videoObject.ItemModule[id].stats.playCount,
-      noWaterMark ? this.noWaterMark(videoObject.ItemModule[id].video.id) : videoObject.ItemModule[id].video.downloadAddr.trim(),
+      noWaterMark
+        ? this.noWaterMark(videoObject.ItemModule[id].video.id)
+        : videoObject.ItemModule[id].video.downloadAddr.trim(),
       videoObject.ItemModule[id].video.cover,
       videoObject.ItemModule[id].video.dynamicCover,
-      noWaterMark ? this.noWaterMark(videoObject.ItemModule[id].video.id) : videoObject.ItemModule[id].video.playAddr.trim(),
+      noWaterMark
+        ? this.noWaterMark(videoObject.ItemModule[id].video.id)
+        : videoObject.ItemModule[id].video.playAddr.trim(),
       videoObject.ItemModule[id].video.format,
       videoObject.ItemModule[id].nickname
     );
@@ -237,12 +241,13 @@ export class TTScraper {
   async getAllVideosFromUser(username: string): Promise<IVideo[]> {
     if (!username) throw new Error("You must provide a username!");
 
-    let videosObject = await this.TryFetch(`https://www.tiktok.com/@${username}`);
+    let videosObject = await this.TryFetch(
+      `https://www.tiktok.com/@${username}`
+    );
 
     const videos: IVideo[] = [];
 
-
-    const { ItemList } = videosObject
+    const { ItemList } = videosObject;
     ItemList["user-post"].list.forEach((id: string) => {
       videos.push(
         new Video(
@@ -341,7 +346,8 @@ export class TTScraper {
     if (!options.watermark) {
       for (const [index, video] of getAllvideos.entries()) {
         console.log(
-          `Downloading Video: ${video.description ? video.description : video.id
+          `Downloading Video: ${
+            video.description ? video.description : video.id
           }, [${index + 1}/${getAllvideos.length}]`
         );
 
@@ -349,7 +355,8 @@ export class TTScraper {
 
         if (!noWaterMarkLink) {
           console.log(
-            `Could not fetch ${video.description ? video.description : video.id
+            `Could not fetch ${
+              video.description ? video.description : video.id
             } with no watermark`
           );
           continue;
@@ -366,7 +373,8 @@ export class TTScraper {
 
     for (const [index, video] of getAllvideos.entries()) {
       console.log(
-        `Downloading Video: ${video.description ? video.description : video.id
+        `Downloading Video: ${
+          video.description ? video.description : video.id
         }, [${index + 1}/${getAllvideos.length}]`
       );
 
