@@ -1,4 +1,3 @@
-import * as cheerio from "cheerio";
 import miniget from "miniget";
 import fetch, { RequestInit } from "node-fetch";
 import { createWriteStream, existsSync, mkdirSync, unlinkSync } from "node:fs";
@@ -10,6 +9,11 @@ import { IMusic, IUser, IVideo } from "../../Interfaces";
 import { Music, User, Video } from "../Entities";
 
 export class TTScraper {
+  _cookies: string = ""
+
+  constructor(cookies?: string) {
+    cookies = this._cookies
+  }
   /**
    * Fetches the website content and convert its content into text.
    * @param baseUrl baseUrl of the site to fetch
@@ -51,6 +55,7 @@ export class TTScraper {
         "Accept-Encoding": "gzip, deflate, br",
         "Cache-Control": "no-cache",
         Connection: "keep-alive",
+        Cookie: `${this._cookies}`
       },
     };
 
@@ -59,11 +64,44 @@ export class TTScraper {
       fetchOptions ? fetchOptions : DefaultOptions
     );
     const res = await req.text();
-    const $ = cheerio.load(res, {
-      xmlMode: true,
-    });
-    return $;
+    return res;
   }
+
+  /**
+   * Extract the JSON Object from the DOM with JavaScript instead of cheerio
+   * @param html string
+   * @returns 
+   */
+
+  private extractJSONObject(html: string) {
+    const endofJson = html
+      .split(`<script id="SIGI_STATE" type="application/json">`)[1]
+      .indexOf("</script>");
+
+    const InfoObject = html
+      .split(`<script id="SIGI_STATE" type="application/json">`)[1]
+      .slice(0, endofJson)
+
+    return InfoObject;
+  }
+
+  /**
+   * Trys to parse the JSON Object extracted from the Page HTML 
+   * @param content HTML DOM Content
+   * @returns 
+   */
+
+  private checkJSONExisting(content: string) {
+    try {
+      return JSON.parse(content) ? true : false
+    } catch (error) { }
+  }
+
+  /**
+   * Does Tiktok Requests with headless chrome
+   * @param url 
+   * @returns 
+   */
 
   private async requestWithPuppeteer(url: string) {
     const browser = await puppeteer.launch({
@@ -78,23 +116,15 @@ export class TTScraper {
     }
 
     const html = await tiktokPage.text();
-    const endofJson = html
-      .split(`<script id="SIGI_STATE" type="application/json">`)[1]
-      .indexOf("</script>");
 
-    const InfoObject = JSON.parse(
-      html
-        .split(`<script id="SIGI_STATE" type="application/json">`)[1]
-        .slice(0, endofJson)
-    );
     await browser.close();
-    return InfoObject;
+    return this.extractJSONObject(html);
   }
 
   /**
    * Replaces the window Object with a export string and writes the new JS file to work with the result as a JS Object
    * @param content the HTML content of the Page
-   * @deprecated No need for this function anymore since Tiktok now adds the json directly to the html
+   * @deprecated No need for this function anymore since Tiktok now adds the json directly to the html in a seperated script tag
    */
 
   private handleHTMLContent(content: string) {
@@ -110,37 +140,52 @@ export class TTScraper {
   }
 
   /**
+   * Checker to use Node-fetch over puppteer in case cookies were not required since it happens randomly
+   * @param link 
+   * @returns 
+   */
+
+  async TryFetch(link: string) {
+    const req = await this.requestWebsite(link);
+    if (!this.checkJSONExisting(this.extractJSONObject(req))) {
+      const videoJson = await this.requestWithPuppeteer(link);
+      return JSON.parse(videoJson);
+    } else {
+      return JSON.parse(this.extractJSONObject(req));
+    }
+  }
+
+  /**
    * Scrapes the tiktok video info from the given Link
    * @param uri tiktok video url
    * @returns Video
    */
 
-  async video(uri: string): Promise<Video> {
+  async video(uri: string, noWaterMark?: boolean): Promise<Video> {
     if (!uri) throw new Error("A video URL must be provided");
+    let videoObject = await this.TryFetch(uri);
 
-    const videoJson = await this.requestWithPuppeteer(uri);
-
-    const id = videoJson.ItemList.video.list[0];
+    const id = videoObject.ItemList.video.list[0];
     const videoResult: IVideo = new Video(
-      videoJson.ItemModule[id].video.id,
-      videoJson.ItemModule[id].desc,
+      videoObject.ItemModule[id].video.id,
+      videoObject.ItemModule[id].desc,
       new Date(
-        Number(videoJson.ItemModule[id].createTime) * 1000
+        Number(videoObject.ItemModule[id].createTime) * 1000
       ).toLocaleDateString(),
-      Number(videoJson.ItemModule[id].video.height),
-      Number(videoJson.ItemModule[id].video.width),
-      Number(videoJson.ItemModule[id].video.duration),
-      videoJson.ItemModule[id].video.ratio,
-      videoJson.ItemModule[id].stats.shareCount,
-      videoJson.ItemModule[id].stats.diggCount,
-      videoJson.ItemModule[id].stats.commentCount,
-      videoJson.ItemModule[id].stats.playCount,
-      videoJson.ItemModule[id].video.downloadAddr.trim(),
-      videoJson.ItemModule[id].video.cover,
-      videoJson.ItemModule[id].video.dynamicCover,
-      videoJson.ItemModule[id].video.playAddr.trim(),
-      videoJson.ItemModule[id].video.format,
-      videoJson.ItemModule[id].nickname
+      Number(videoObject.ItemModule[id].video.height),
+      Number(videoObject.ItemModule[id].video.width),
+      Number(videoObject.ItemModule[id].video.duration),
+      videoObject.ItemModule[id].video.ratio,
+      videoObject.ItemModule[id].stats.shareCount,
+      videoObject.ItemModule[id].stats.diggCount,
+      videoObject.ItemModule[id].stats.commentCount,
+      videoObject.ItemModule[id].stats.playCount,
+      noWaterMark ? this.noWaterMark(videoObject.ItemModule[id].video.id) : videoObject.ItemModule[id].video.downloadAddr.trim(),
+      videoObject.ItemModule[id].video.cover,
+      videoObject.ItemModule[id].video.dynamicCover,
+      noWaterMark ? this.noWaterMark(videoObject.ItemModule[id].video.id) : videoObject.ItemModule[id].video.playAddr.trim(),
+      videoObject.ItemModule[id].video.format,
+      videoObject.ItemModule[id].nickname
     );
 
     return videoResult;
@@ -155,14 +200,9 @@ export class TTScraper {
   async user(username: string): Promise<User> {
     if (!username) throw new Error("Please enter a username");
 
-    const grabInfoObject = await this.requestWithPuppeteer(
-      `https://www.tiktok.com/@${username}`
-    );
-    if (!grabInfoObject)
-      throw new Error(
-        `Could not parse user page, please consider adding tiktok cookies.`
-      );
-    const userObject = grabInfoObject.UserModule.users[username];
+    let infoObject = await this.TryFetch(`https://www.tiktok.com/@${username}`);
+
+    const userObject = infoObject.UserModule.users[username];
 
     const userResult: IUser = new User(
       userObject.id,
@@ -176,10 +216,10 @@ export class TTScraper {
       userObject?.bioLink?.link,
       userObject.privateAccount,
       userObject.isUnderAge18,
-      grabInfoObject.UserModule.stats[username].followerCount,
-      grabInfoObject.UserModule.stats[username].followingCount,
-      grabInfoObject.UserModule.stats[username].heart,
-      grabInfoObject.UserModule.stats[username].videoCount
+      infoObject.UserModule.stats[username].followerCount,
+      infoObject.UserModule.stats[username].followingCount,
+      infoObject.UserModule.stats[username].heart,
+      infoObject.UserModule.stats[username].videoCount
     );
     return userResult;
   }
@@ -193,34 +233,33 @@ export class TTScraper {
   async getAllVideosFromUser(username: string): Promise<IVideo[]> {
     if (!username) throw new Error("You must provide a username!");
 
-    const userInfo = await this.requestWithPuppeteer(
-      `https://www.tiktok.com/@${username}`
-    );
+    let videosObject = await this.TryFetch(`https://www.tiktok.com/@${username}`);
 
     const videos: IVideo[] = [];
 
-    const { ItemList } = userInfo;
+
+    const { ItemList } = videosObject
     ItemList["user-post"].list.forEach((id: string) => {
       videos.push(
         new Video(
-          userInfo.ItemModule[id].video.id,
-          userInfo.ItemModule[id].desc,
+          videosObject.ItemModule[id].video.id,
+          videosObject.ItemModule[id].desc,
           new Date(
-            Number(userInfo.ItemModule[id].createTime) * 1000
+            Number(videosObject.ItemModule[id].createTime) * 1000
           ).toLocaleDateString(),
-          Number(userInfo.ItemModule[id].video.height),
-          Number(userInfo.ItemModule[id].video.width),
-          Number(userInfo.ItemModule[id].video.duration),
-          userInfo.ItemModule[id].video.ratio,
-          userInfo.ItemModule[id].stats.shareCount,
-          userInfo.ItemModule[id].stats.diggCount,
-          userInfo.ItemModule[id].stats.commentCount,
-          userInfo.ItemModule[id].stats.playCount,
-          userInfo.ItemModule[id].video.downloadAddr.trim(),
-          userInfo.ItemModule[id].video.cover,
-          userInfo.ItemModule[id].video.dynamicCover,
-          userInfo.ItemModule[id].video.playAddr.trim(),
-          userInfo.ItemModule[id].video.format
+          Number(videosObject.ItemModule[id].video.height),
+          Number(videosObject.ItemModule[id].video.width),
+          Number(videosObject.ItemModule[id].video.duration),
+          videosObject.ItemModule[id].video.ratio,
+          videosObject.ItemModule[id].stats.shareCount,
+          videosObject.ItemModule[id].stats.diggCount,
+          videosObject.ItemModule[id].stats.commentCount,
+          videosObject.ItemModule[id].stats.playCount,
+          videosObject.ItemModule[id].video.downloadAddr.trim(),
+          videosObject.ItemModule[id].video.cover,
+          videosObject.ItemModule[id].video.dynamicCover,
+          videosObject.ItemModule[id].video.playAddr.trim(),
+          videosObject.ItemModule[id].video.format
         )
       );
     });
@@ -235,20 +274,20 @@ export class TTScraper {
   async getMusic(link: string): Promise<Music> {
     if (!link) throw new Error("You must provide a link!");
 
-    const infoObject = await this.requestWithPuppeteer(link);
+    let musicObject: any = await this.TryFetch(link);
 
-    const id = infoObject.ItemList.video.list[0];
+    const id = musicObject.ItemList.video.list[0];
 
     const music: IMusic = new Music(
-      infoObject.ItemModule[id].music.id,
-      infoObject.ItemModule[id].music.title,
-      infoObject.ItemModule[id].music.playUrl,
-      infoObject.ItemModule[id].music.coverLarge,
-      infoObject.ItemModule[id].music.coverThumb,
-      infoObject.ItemModule[id].music.authorName,
-      Number(infoObject.ItemModule[id].music.duration),
-      infoObject.ItemModule[id].music.original,
-      infoObject.ItemModule[id].music.album
+      musicObject.ItemModule[id].music.id,
+      musicObject.ItemModule[id].music.title,
+      musicObject.ItemModule[id].music.playUrl,
+      musicObject.ItemModule[id].music.coverLarge,
+      musicObject.ItemModule[id].music.coverThumb,
+      musicObject.ItemModule[id].music.authorName,
+      Number(musicObject.ItemModule[id].music.duration),
+      musicObject.ItemModule[id].music.original,
+      musicObject.ItemModule[id].music.album
     );
 
     return music;
@@ -298,8 +337,7 @@ export class TTScraper {
     if (!options.watermark) {
       for (const [index, video] of getAllvideos.entries()) {
         console.log(
-          `Downloading Video: ${
-            video.description ? video.description : video.id
+          `Downloading Video: ${video.description ? video.description : video.id
           }, [${index + 1}/${getAllvideos.length}]`
         );
 
@@ -307,8 +345,7 @@ export class TTScraper {
 
         if (!noWaterMarkLink) {
           console.log(
-            `Could not fetch ${
-              video.description ? video.description : video.id
+            `Could not fetch ${video.description ? video.description : video.id
             } with no watermark`
           );
           continue;
@@ -325,8 +362,7 @@ export class TTScraper {
 
     for (const [index, video] of getAllvideos.entries()) {
       console.log(
-        `Downloading Video: ${
-          video.description ? video.description : video.id
+        `Downloading Video: ${video.description ? video.description : video.id
         }, [${index + 1}/${getAllvideos.length}]`
       );
 
@@ -382,36 +418,34 @@ export class TTScraper {
     if (!tag)
       throw new Error("You must provide a tag name to complete the search!");
 
-    const parseTagResult = await this.requestWithPuppeteer(
-      `https://www.tiktok.com/tag/${tag}`
-    );
+    let tagsObject = await this.TryFetch(`https://www.tiktok.com/tag/${tag}`);
 
-    const { ItemList } = parseTagResult;
+    const { ItemList } = tagsObject;
 
     const videos: IVideo[] = [];
 
     for (const video of ItemList.challenge.list) {
       videos.push(
         new Video(
-          parseTagResult.ItemModule[video].video.id,
-          parseTagResult.ItemModule[video].desc,
+          tagsObject.ItemModule[video].video.id,
+          tagsObject.ItemModule[video].desc,
           new Date(
-            Number(parseTagResult.ItemModule[video].createTime) * 1000
+            Number(tagsObject.ItemModule[video].createTime) * 1000
           ).toLocaleDateString(),
-          Number(parseTagResult.ItemModule[video].video.height),
-          Number(parseTagResult.ItemModule[video].video.width),
-          Number(parseTagResult.ItemModule[video].video.duration),
-          parseTagResult.ItemModule[video].video.ratio,
-          parseTagResult.ItemModule[video].stats.shareCount,
-          parseTagResult.ItemModule[video].stats.diggCount,
-          parseTagResult.ItemModule[video].stats.commentCount,
-          parseTagResult.ItemModule[video].stats.playCount,
-          parseTagResult.ItemModule[video].video.downloadAddr.trim(),
-          parseTagResult.ItemModule[video].video.cover,
-          parseTagResult.ItemModule[video].video.dynamicCover,
-          parseTagResult.ItemModule[video].video.playAddr.trim(),
-          parseTagResult.ItemModule[video].video.format,
-          parseTagResult.ItemModule[video].author
+          Number(tagsObject.ItemModule[video].video.height),
+          Number(tagsObject.ItemModule[video].video.width),
+          Number(tagsObject.ItemModule[video].video.duration),
+          tagsObject.ItemModule[video].video.ratio,
+          tagsObject.ItemModule[video].stats.shareCount,
+          tagsObject.ItemModule[video].stats.diggCount,
+          tagsObject.ItemModule[video].stats.commentCount,
+          tagsObject.ItemModule[video].stats.playCount,
+          tagsObject.ItemModule[video].video.downloadAddr.trim(),
+          tagsObject.ItemModule[video].video.cover,
+          tagsObject.ItemModule[video].video.dynamicCover,
+          tagsObject.ItemModule[video].video.playAddr.trim(),
+          tagsObject.ItemModule[video].video.format,
+          tagsObject.ItemModule[video].author
         )
       );
     }
