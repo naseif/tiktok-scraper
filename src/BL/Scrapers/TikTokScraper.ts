@@ -1,3 +1,4 @@
+import * as cheerio from "cheerio";
 import miniget from "miniget";
 import fetch, { RequestInit } from "node-fetch";
 import { createWriteStream, existsSync, mkdirSync, unlinkSync } from "node:fs";
@@ -64,7 +65,10 @@ export class TTScraper {
       fetchOptions ? fetchOptions : DefaultOptions
     );
     const res = await req.text();
-    return res;
+    const $ = cheerio.load(res, {
+      xmlMode: true,
+    });
+    return $;
   }
 
   /**
@@ -146,12 +150,12 @@ export class TTScraper {
    */
 
   async TryFetch(link: string) {
-    const req = await this.requestWebsite(link);
-    if (!this.checkJSONExisting(this.extractJSONObject(req))) {
+    const $ = await this.requestWebsite(link);
+    if (!this.checkJSONExisting($("#SIGI_STATE").text())) {
       const videoJson = await this.requestWithPuppeteer(link);
       return JSON.parse(videoJson);
     } else {
-      return JSON.parse(this.extractJSONObject(req));
+      return JSON.parse($("#SIGI_STATE").text());
     }
   }
 
