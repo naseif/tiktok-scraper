@@ -3,13 +3,14 @@ import { TTScraper } from "./BL/Scrapers/TikTokScraper";
 /**
  * Scrapes the tiktok video info from the given url
  * @param url tiktok video url
+ * @param noWaterMark if video should be without watermark
  * @returns Video
  */
 
-export async function fetchVideo(url: string) {
+export async function fetchVideo(url: string, noWaterMark?: boolean) {
   if (!url) throw new Error(`You must provide a Tiktok video url!`);
 
-  return await new TTScraper().video(url);
+  return await new TTScraper().video(url, noWaterMark);
 }
 
 /**

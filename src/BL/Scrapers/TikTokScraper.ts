@@ -185,12 +185,12 @@ export class TTScraper {
       videoObject.ItemModule[id].stats.commentCount,
       videoObject.ItemModule[id].stats.playCount,
       noWaterMark
-        ? this.noWaterMark(videoObject.ItemModule[id].video.id)
+        ? await this.noWaterMark(videoObject.ItemModule[id].video.id)
         : videoObject.ItemModule[id].video.downloadAddr.trim(),
       videoObject.ItemModule[id].video.cover,
       videoObject.ItemModule[id].video.dynamicCover,
       noWaterMark
-        ? this.noWaterMark(videoObject.ItemModule[id].video.id)
+        ? await this.noWaterMark(videoObject.ItemModule[id].video.id)
         : videoObject.ItemModule[id].video.playAddr.trim(),
       videoObject.ItemModule[id].video.format,
       videoObject.ItemModule[id].nickname
@@ -268,7 +268,8 @@ export class TTScraper {
           videosObject.ItemModule[id].video.cover,
           videosObject.ItemModule[id].video.dynamicCover,
           videosObject.ItemModule[id].video.playAddr.trim(),
-          videosObject.ItemModule[id].video.format
+          videosObject.ItemModule[id].video.format,
+          videosObject.ItemModule[id].author
         )
       );
     });
@@ -421,7 +422,7 @@ export class TTScraper {
   }
 
   /**
-   * Scrapes a hashtag posts
+   * Scrapes hashtag posts
    * @param tag tiktok hashtag
    * @returns Promise<IVideo[]>
    */
