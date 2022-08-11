@@ -29,7 +29,7 @@ const { TTScraper } = require("tiktok-scraper-ts"); // Individual classes
 ## Class Methods
 
 ```ts
-.video(url) scrapes video info and download link. Returns Promise<Video>
+.video(url, noWaterMark) scrapes video info and download link. You can decide if the video should have a watermark or not. Returns Promise<Video>
 .user(username) Scrapes user info. Returns Promise<User>
 .getAllVideosFromUser(username) Scrapes all available videos for the given user. Returns Promise<IVideo[]>
 .getMusic(url) Scrapes Music info from a video. Returns Promise<Music>
@@ -45,7 +45,7 @@ Since 1.2.6 you can also import functions directly
 ### API
 
 ```ts
-fetchVideo(url); // Same as TTScraper.video(url)
+fetchVideo(url, true); // Same as TTScraper.video(url, noWaterMark)
 fetchUser(username); // Same as TTScraper.user(username)
 fetchAllVideosFromUser(username); // Same as TTScraper.getAllVideosFromUser(username)
 fetchMusic(url); // Same as TTScraper.getMusic(url)
@@ -55,15 +55,26 @@ hashtag(tag); // Same as TTScraper.hashtag(tag)
 
 ## Examples
 
-### Fetch info for a single video
+### Cookies Support
+
+Since 1.3.5 you can use cookies. In some cases where the request is not successful, a second request using puppteer will be made. However the request could take 2x longer. To avoid this you can use cookies. This is optional though.
 
 ```ts
 import { TTScraper } from "tiktok-scraper-ts";
 
+const COOKIES = `cookies`
+const TikTokScraper = new TTScraper(COOKIES); // all requests will try to use this cookie if it's valid
+
+```
+
+### Fetch info for a single video
+
+```ts
+import { TTScraper } from "tiktok-scraper-ts";
 const TikTokScraper = new TTScraper();
 
 (async () => {
-  const fetchVideo = await TikTokScraper.video("link");
+  const fetchVideo = await TikTokScraper.video("link", true); // second argument set to true to fetch the video without watermark
   console.log(fetchVideo);
 })();
 
