@@ -27,12 +27,16 @@ export async function fetchUser(username: string) {
 /**
  * Scrapes a user page and returns a list of all videos for this user
  * @param username tiktok username of a user
+ * @param noWaterMark if true, noWaterMark
  * @returns IVideo[]
  */
 
-export async function fetchAllVideosFromUser(username: string) {
+export async function fetchAllVideosFromUser(
+  username: string,
+  noWaterMark?: boolean
+) {
   if (!username) throw new Error(`You must provide a username!`);
-  return await new TTScraper().getAllVideosFromUser(username);
+  return await new TTScraper().getAllVideosFromUser(username, noWaterMark);
 }
 
 /**

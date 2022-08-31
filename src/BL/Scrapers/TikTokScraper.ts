@@ -234,6 +234,7 @@ export class TTScraper {
   /**
    * Scrapes a user page and returns a list of all videos for this user
    * @param username tiktok username
+   * @param noWaterMark whether the returned videos should be without watermark
    * @returns IVideo[]
    */
 
