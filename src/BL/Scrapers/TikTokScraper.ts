@@ -170,6 +170,9 @@ export class TTScraper {
     let videoObject = await this.TryFetch(uri);
 
     const id = videoObject.ItemList.video.list[0];
+    const videoURL = noWaterMark
+      ? await this.noWaterMark(videoObject.ItemModule[id].video.id)
+      : videoObject.ItemModule[id].video.downloadAddr.trim();
     const videoResult: IVideo = new Video(
       videoObject.ItemModule[id].video.id,
       videoObject.ItemModule[id].desc,
@@ -184,14 +187,10 @@ export class TTScraper {
       videoObject.ItemModule[id].stats.diggCount,
       videoObject.ItemModule[id].stats.commentCount,
       videoObject.ItemModule[id].stats.playCount,
-      noWaterMark
-        ? await this.noWaterMark(videoObject.ItemModule[id].video.id)
-        : videoObject.ItemModule[id].video.downloadAddr.trim(),
+      videoURL,
       videoObject.ItemModule[id].video.cover,
       videoObject.ItemModule[id].video.dynamicCover,
-      noWaterMark
-        ? await this.noWaterMark(videoObject.ItemModule[id].video.id)
-        : videoObject.ItemModule[id].video.playAddr.trim(),
+      videoURL,
       videoObject.ItemModule[id].video.format,
       videoObject.ItemModule[id].nickname
     );
@@ -411,14 +410,14 @@ export class TTScraper {
         "There was an Error retrieveing this video without watermark!"
       );
 
-    const noWaterMarkID = noWaterJson.aweme_detail.video.download_addr.uri;
+    const noWaterMarkID = noWaterJson.aweme_detail.video.play_addr;
 
     if (!noWaterMarkID)
       throw new Error(
         "There was an Error retrieveing this video without watermark!"
       );
 
-    return `https://api-h2.tiktokv.com/aweme/v1/play/?video_id=${noWaterMarkID}`;
+    return noWaterMarkID.url_list[0];
   }
 
   /**
