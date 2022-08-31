@@ -237,7 +237,10 @@ export class TTScraper {
    * @returns IVideo[]
    */
 
-  async getAllVideosFromUser(username: string): Promise<IVideo[]> {
+  async getAllVideosFromUser(
+    username: string,
+    noWaterMark?: boolean
+  ): Promise<IVideo[]> {
     if (!username) throw new Error("You must provide a username!");
 
     let videosObject = await this.TryFetch(
@@ -247,7 +250,12 @@ export class TTScraper {
     const videos: IVideo[] = [];
 
     const { ItemList } = videosObject;
-    ItemList["user-post"].list.forEach((id: string) => {
+
+    for (const id of ItemList["user-post"].list) {
+      const videoURL = noWaterMark
+        ? await this.noWaterMark(videosObject.ItemModule[id].video.id)
+        : videosObject.ItemModule[id].video.downloadAddr.trim();
+
       videos.push(
         new Video(
           videosObject.ItemModule[id].video.id,
@@ -263,15 +271,16 @@ export class TTScraper {
           videosObject.ItemModule[id].stats.diggCount,
           videosObject.ItemModule[id].stats.commentCount,
           videosObject.ItemModule[id].stats.playCount,
-          videosObject.ItemModule[id].video.downloadAddr.trim(),
+          videoURL,
           videosObject.ItemModule[id].video.cover,
           videosObject.ItemModule[id].video.dynamicCover,
-          videosObject.ItemModule[id].video.playAddr.trim(),
+          videoURL,
           videosObject.ItemModule[id].video.format,
           videosObject.ItemModule[id].author
         )
       );
-    });
+    }
+
     return videos;
   }
 
