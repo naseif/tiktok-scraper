@@ -31,12 +31,9 @@ export async function fetchUser(username: string) {
  * @returns IVideo[]
  */
 
-export async function fetchAllVideosFromUser(
-  username: string,
-  noWaterMark?: boolean
-) {
+export async function fetchAllVideosFromUser(username: string) {
   if (!username) throw new Error(`You must provide a username!`);
-  return await new TTScraper().getAllVideosFromUser(username, noWaterMark);
+  return await new TTScraper().getAllVideosFromUser(username);
 }
 
 /**
