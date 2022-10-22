@@ -165,11 +165,11 @@ export class TTScraper {
    * @returns Video
    */
 
-  async video(uri: string, noWaterMark?: boolean): Promise<Video> {
+  async video(uri: string, noWaterMark?: boolean): Promise<Video | void> {
     if (!uri) throw new Error("A video URL must be provided");
     let videoObject = await this.TryFetch(uri);
-
-    const id = videoObject.ItemList.video.list[0];
+    const id = videoObject.ItemList?.video?.list[0] ?? 0;
+    if (id == 0) return console.log(`Could not find the Video on Tiktok!`);
     const videoURL = noWaterMark
       ? await this.noWaterMark(videoObject.ItemModule[id].video.id)
       : videoObject.ItemModule[id].video.downloadAddr.trim();
@@ -406,7 +406,10 @@ export class TTScraper {
     let id: string = "";
 
     if (link.startsWith("https")) {
-      id = (await this.video(link)).id;
+      const videoID = await this.video(link);
+      if (!videoID?.id)
+        return console.log(`Could not extract the Video ID from Tiktok!`);
+      id = videoID.id;
     } else {
       id = link;
     }
