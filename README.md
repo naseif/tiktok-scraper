@@ -59,12 +59,14 @@ hashtag(tag); // Same as TTScraper.hashtag(tag)
 
 Since 1.3.5 you can use cookies. In some cases where the request is not successful, a second request using puppteer will be made. However the request could take 2x longer. To avoid this you can use cookies. This is optional though.
 
+The recommended way to get cookies is by installing the `cookies.txt` extension for the browser and then go to `www.tiktok.com` and export the cookies for current site. Then save the cookies.txt file and give the path of the cookie file as a parameter to the TTScraper class.
+
+This is the only supported way to use cookies for now.
+
 ```ts
 import { TTScraper } from "tiktok-scraper-ts";
 
-const COOKIES = `cookies`
-const TikTokScraper = new TTScraper(COOKIES); // all requests will try to use this cookie if it's valid
-
+const TikTokScraper = new TTScraper("./cookies.txt"); // all requests will try to use this cookie if it's valid
 ```
 
 ### Fetch info for a single video
