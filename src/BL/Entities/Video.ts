@@ -69,6 +69,10 @@ export class Video implements IVideo {
    * Author of the Video
    */
   author?: string | undefined;
+  /**
+   * Direct Link to the video
+   */
+  directVideoUrl?: string | undefined;
 
   /**
    *
@@ -106,7 +110,8 @@ export class Video implements IVideo {
     dynamicCover?: string | undefined,
     playURL?: string | undefined,
     format?: string | undefined,
-    author?: string | undefined
+    author?: string | undefined,
+    directVideoUrl?: string | undefined
   ) {
     this.id = id;
     this.description = description;
@@ -125,5 +130,6 @@ export class Video implements IVideo {
     this.playURL = playURL;
     this.format = format;
     this.author = author;
+    this.directVideoUrl = directVideoUrl;
   }
 }

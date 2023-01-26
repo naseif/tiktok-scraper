@@ -1,6 +1,6 @@
 {
   "name": "tiktok-scraper-ts",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "A scraper for tiktok videos, users and more",
   "main": "dist/main.js",
   "scripts": {
@@ -36,7 +36,9 @@
   "dependencies": {
     "cheerio": "^1.0.0-rc.12",
     "miniget": "^4.2.2",
+    "netscape-cookies-parser": "^1.0.2",
     "node-fetch": "^2.6.7",
-    "puppeteer": "^16.0.0"
+    "puppeteer": "^16.0.0",
+    "tiktok-signature": "^1.7.3"
   }
 }

@@ -42,10 +42,6 @@ export class User implements IUser {
    */
   privateAccount: boolean;
   /**
-   * Whether the User is underage
-   */
-  isUnderAge18: boolean;
-  /**
    * Number of followers for this User
    */
   followers: number;
@@ -91,7 +87,6 @@ export class User implements IUser {
     secretUID: string,
     bioLink: string,
     privateAccount: boolean,
-    isUnderAge18: boolean,
     followers: number,
     following: number,
     hearts: number,
@@ -107,7 +102,6 @@ export class User implements IUser {
     this.secretUID = secretUID;
     this.bioLink = bioLink;
     this.privateAccount = privateAccount;
-    this.isUnderAge18 = isUnderAge18;
     this.followers = followers;
     this.following = following;
     this.hearts = hearts;

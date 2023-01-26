@@ -71,4 +71,9 @@ export interface IVideo {
    * Author of the Video
    */
   author?: string;
+
+  /**
+   * Direct Link to the video
+   */
+  directVideoUrl?: string;
 }

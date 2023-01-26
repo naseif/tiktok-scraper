@@ -8,13 +8,19 @@ import https from "node:https";
 import { exit } from "node:process";
 import { IMusic, IUser, IVideo } from "../../Interfaces";
 import { Music, User, Video } from "../Entities";
+import { CookieJar } from "netscape-cookies-parser";
+import { getUserVideos } from "./User-Videos";
 
 export class TTScraper {
-  _cookies?: string = "";
+  _cookiesJar: CookieJar = new CookieJar();
+  _cookies: string;
 
-  constructor(cookies?: string) {
-    this._cookies = cookies;
+  constructor(cookiesPath?: string) {
+    cookiesPath
+      ? (this._cookies = this._cookiesJar.load(cookiesPath!))
+      : (this._cookies = "");
   }
+
   /**
    * Fetches the website content and convert its content into text.
    * @param baseUrl baseUrl of the site to fetch
@@ -56,7 +62,7 @@ export class TTScraper {
         "Accept-Encoding": "gzip, deflate, br",
         "Cache-Control": "no-cache",
         Connection: "keep-alive",
-        Cookie: `${this._cookies}`,
+        Cookie: `${this._cookies ? this._cookiesJar.toString() : ""}`,
       },
     };
 
@@ -113,7 +119,7 @@ export class TTScraper {
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
     const page = await browser.newPage();
-    const tiktokPage = await page.goto(url);
+    const tiktokPage = await page.goto(url, { waitUntil: "domcontentloaded" });
 
     if (tiktokPage == null) {
       throw new Error("Could not load the desired Page!");
@@ -149,7 +155,7 @@ export class TTScraper {
    * @returns
    */
 
-  async TryFetch(link: string) {
+  private async TryFetch(link: string) {
     const $ = await this.requestWebsite(link);
     if (!this.checkJSONExisting($("#SIGI_STATE").text())) {
       const videoJson = await this.requestWithPuppeteer(link);
@@ -171,10 +177,11 @@ export class TTScraper {
     const id = videoObject.ItemList?.video?.list[0] ?? 0;
     if (id == 0) return console.log(`Could not find the Video on Tiktok!`);
     const videoURL = noWaterMark
-      ? await this.noWaterMark(videoObject.ItemModule[id].video.id)
-      : videoObject.ItemModule[id].video.downloadAddr.trim();
+      ? await this.noWaterMark(uri)
+      : videoObject.ItemModule[id].video.playAddr.trim();
+
     const videoResult: IVideo = new Video(
-      videoObject.ItemModule[id].video.id,
+      id,
       videoObject.ItemModule[id].desc,
       new Date(
         Number(videoObject.ItemModule[id].createTime) * 1000
@@ -192,7 +199,8 @@ export class TTScraper {
       videoObject.ItemModule[id].video.dynamicCover,
       videoURL,
       videoObject.ItemModule[id].video.format,
-      videoObject.ItemModule[id].nickname
+      videoObject.ItemModule[id].author,
+      `https://www.tiktok.com/@${videoObject.ItemModule[id].author}/video/${id}`
     );
 
     return videoResult;
@@ -208,7 +216,6 @@ export class TTScraper {
     if (!username) throw new Error("Please enter a username");
 
     let infoObject = await this.TryFetch(`https://www.tiktok.com/@${username}`);
-
     const userObject = infoObject.UserModule.users[username];
 
     const userResult: IUser = new User(
@@ -222,7 +229,6 @@ export class TTScraper {
       userObject.secUid,
       userObject?.bioLink?.link,
       userObject.privateAccount,
-      userObject.isUnderAge18,
       infoObject.UserModule.stats[username].followerCount,
       infoObject.UserModule.stats[username].followingCount,
       infoObject.UserModule.stats[username].heart,
@@ -238,7 +244,10 @@ export class TTScraper {
    * @returns IVideo[]
    */
 
-  async getAllVideosFromUser(username: string): Promise<IVideo[]> {
+  async getAllVideosFromUser(
+    username: string,
+    noWaterMark?: boolean
+  ): Promise<IVideo[]> {
     if (!username) throw new Error("You must provide a username!");
 
     const { secretUID } = await this.user(`${username}`);
@@ -250,7 +259,7 @@ export class TTScraper {
 
     const videos: IVideo[] = [];
     const resultArray = [];
-    const userVideos = await this.fetchUserVideos(secretUID, cursor);
+    const userVideos = await getUserVideos(secretUID, cursor);
 
     if (userVideos?.itemList) {
       resultArray.push(userVideos.itemList);
@@ -259,7 +268,7 @@ export class TTScraper {
 
     if (userVideos?.hasMore === true) {
       while (true) {
-        const fetchMore = await this.fetchUserVideos(secretUID, cursor);
+        const fetchMore = await getUserVideos(secretUID, cursor);
         resultArray.push(fetchMore.itemList);
         cursor = fetchMore.cursor;
         if (fetchMore.hasMore == false) {
@@ -269,9 +278,6 @@ export class TTScraper {
     }
 
     for (const result of resultArray) {
-      // const videoURL = noWaterMark
-      //   ? await this.noWaterMark(videosObject.ItemModule[id].video.id)
-      //   : videosObject.ItemModule[id].video.downloadAddr.trim();
       for (const video of result) {
         videos.push(
           new Video(
@@ -286,12 +292,21 @@ export class TTScraper {
             video?.stats?.diggCount,
             video?.stats?.commentCount,
             video?.stats?.playCount,
-            video.video?.downloadAddr.trim(),
+            noWaterMark
+              ? await this.noWaterMark(
+                  `https://www.tiktok.com/@${video.author.uniqueId}/video/${video.id}`
+                )
+              : video.video?.downloadAddr.trim(),
             video?.video?.cover,
             video?.video?.dynamicCover,
-            video.video?.downloadAddr.trim(),
+            noWaterMark
+              ? await this.noWaterMark(
+                  `https://www.tiktok.com/@${video.author.uniqueId}/video/${video.id}`
+                )
+              : video.video?.downloadAddr.trim(),
             video?.video?.format,
-            video.author
+            video.author,
+            `https://www.tiktok.com/@${video.author.uniqueId}/video/${video.id}`
           )
         );
       }
@@ -301,36 +316,11 @@ export class TTScraper {
   }
 
   /**
-   * Fetches Users Post directly from the API
-   * @param userUID
-   * @param cursor
-   * @returns JSON Object from the API
-   */
-
-  async fetchUserVideos(userUID: string, cursor: string) {
-    const fetchUser = await fetch(
-      `https://m.tiktok.com/api/post/item_list/?aid=1988&count=35&secUid=${userUID}&cursor=${cursor}`,
-      {
-        headers: {
-          "Accept-Encoding": "gzip, deflate, br",
-          Connection: "keep-alive",
-          Cookie:
-            "_ttp=20giOKHgEqBuTmVEAZtfn1d2hY7; ttwid=1%7CTQIxz0XiWfp7pukZEMXLVKPHz-8yYy-hFtsuP9QH6qQ%7C1666445148%7Cb9a0888038642e8181e42a5fdaac6f198842f5be356d87316064ad3bf1f53e33; _abck=2C43FEAB6D7433C06BC6BA58A7ABDFFC~-1~YAAQPeUVAveE++WDAQAAMPXe/wjYc6xTVTh4Ke+kHGxxgJfxDRcT0ee3UkTu3sYlI0/69c8OLY/v+ofiwRwfxveidVDxaESN7yjCkBHSBV2dseB7rOBVUGyOtm1hGsf/hGHEVHVopulk0NAeiJoOWsARcJDql0k07Qhcv2pmP5lYQ17fhi75Lm6tFGCSwl+O9+idv5u8yCSf675M33/mdm5vuhXjPHCASZIjZVftaPqSdJdEDy6Z772SQ3VwQhMMOMpF51aj29e99OCtMRPM3bmbda16q4UAo2m8guw0c3HxhdCTYd/R7MmqDbr51KPRFFYiGmSJj49PstRweWQY4WjaAO+0Bx9ejfYha7dp1Cp/54sYHlI2oYIpTh9c9x2NbNRlFBEghhWK+d4=~-1~-1~-1; cookie-consent={%22ga%22:true%2C%22af%22:true%2C%22fbp%22:true%2C%22lip%22:true%2C%22bing%22:true%2C%22ttads%22:true%2C%22reddit%22:true%2C%22version%22:%22v8%22}; msToken=2ly4AKsEPS3tqqICLrucL3vfxEGgfhV8yzbp4ntCJRwbL0qBr1HGS-39CmfhhfoJgh9AjO-ZZw8yPTeh7VLiaRHPjEFNe-C4p0itrLBHjbjrrnc2vk19rUJNgefqanCQvlY5zg==; bm_sz=F7CD2096F100E2BBF898F75FB340B07E~YAAQPeUVAviE++WDAQAAMPXe/xGNyQyHT0csQ+5X+XBNhPNWpfB37e3Cc+Cy6ca1L3bb3+xVQCSUzwOAZt3AfYCmfis2wGK9oUPRr+6Osp3ZBR2QFOyQX7e3HU8optmJ0xHZV0D6MZc4YzD0xlxoFSkjOxb754ZanGbuFyLJgPCXD926sCOgNBQuGx6Zgk29NwARbeoupgQrRptG/t6eFoJcDA3vL+nHqMpm6XtIXV7i4O5kXn7+E+eCybbMVhkTt+qTnMfot7ULa1NNQSDaQgwZa1UIw8eKs71dyE0cikQFjc4=~4473158~3354937; tt_csrf_token=cBoP4X6a-FRM6sy440ir5_77ij4DfchzNfWQ",
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:106.0) Gecko/20100101 Firefox/106.0",
-          Accept:
-            "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-        },
-      }
-    );
-    return await fetchUser.json();
-  }
-
-  /**
    * Scrapes the given Link and returns information about the Music of the Video
    * @param link tiktok video url
    * @returns Music
    */
+
   async getMusic(link: string): Promise<Music> {
     if (!link) throw new Error("You must provide a link!");
 
@@ -444,34 +434,26 @@ export class TTScraper {
    */
 
   async noWaterMark(link: string): Promise<string | undefined | void> {
-    let id: string = "";
+    const data = { url: link, count: "12", cursor: "0", web: "1", hd: "1" };
+    const fetchNoWaterInfo = await fetch("https://www.tikwm.com/api/", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams(data).toString(),
+    });
 
-    if (link.startsWith("https")) {
-      const videoID = await this.video(link);
-      if (!videoID?.id)
-        return console.log(`Could not extract the Video ID from Tiktok!`);
-      id = videoID.id;
-    } else {
-      id = link;
+    if (!fetchNoWaterInfo.ok) {
+      throw new Error(
+        "There was an Error retrieveing this video without watermark!"
+      );
+    }
+    const noWaterJson = await fetchNoWaterInfo.json();
+    if (noWaterJson.code === -1) {
+      throw new Error(
+        "API Limit for nowatermark, please wait 1 second and try again!"
+      );
     }
 
-    const fetchNoWaterInfo = await fetch(
-      "https://api2.musical.ly/aweme/v1/aweme/detail/?aweme_id=" + id
-    );
-    const noWaterJson = await fetchNoWaterInfo.json();
-    if (!noWaterJson)
-      throw new Error(
-        "There was an Error retrieveing this video without watermark!"
-      );
-
-    const noWaterMarkID = noWaterJson.aweme_detail.video.play_addr;
-
-    if (!noWaterMarkID)
-      throw new Error(
-        "There was an Error retrieveing this video without watermark!"
-      );
-
-    return noWaterMarkID.url_list[0];
+    return "https://www.tikwm.com" + noWaterJson.data.hdplay;
   }
 
   /**

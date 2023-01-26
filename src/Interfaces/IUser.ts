@@ -40,10 +40,6 @@ export interface IUser {
    */
   privateAccount: boolean;
   /**
-   * Whether the User is underage
-   */
-  isUnderAge18: boolean;
-  /**
    * Number of followers for this User
    */
   followers: number;
