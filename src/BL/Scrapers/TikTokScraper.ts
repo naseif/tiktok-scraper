@@ -122,7 +122,7 @@ export class TTScraper {
     const tiktokPage = await page.goto(url, { waitUntil: "domcontentloaded" });
 
     if (tiktokPage == null) {
-      await browser.close()
+      await browser.close();
       throw new Error("Could not load the desired Page!");
     }
 
