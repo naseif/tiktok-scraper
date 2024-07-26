@@ -85,11 +85,15 @@ export class TTScraper {
 
   private extractJSONObject(html: string) {
     const endofJson = html
-      .split(`<script id="SIGI_STATE" type="application/json">`)[1]
+      .split(
+        `<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__" type="application/json">`
+      )[1]
       .indexOf("</script>");
 
     const InfoObject = html
-      .split(`<script id="SIGI_STATE" type="application/json">`)[1]
+      .split(
+        `<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__" type="application/json">`
+      )[1]
       .slice(0, endofJson);
 
     return InfoObject;
@@ -158,11 +162,14 @@ export class TTScraper {
 
   private async TryFetch(link: string) {
     const $ = await this.requestWebsite(link);
-    if (!this.checkJSONExisting($("#SIGI_STATE").text())) {
+    // writeFileSync("test.html", $.text(), "utf-8");
+    if (
+      !this.checkJSONExisting($("#__UNIVERSAL_DATA_FOR_REHYDRATION__").text())
+    ) {
       const videoJson = await this.requestWithPuppeteer(link);
       return JSON.parse(videoJson);
     } else {
-      return JSON.parse($("#SIGI_STATE").text());
+      return JSON.parse($("#__UNIVERSAL_DATA_FOR_REHYDRATION__").text());
     }
   }
 
@@ -172,36 +179,37 @@ export class TTScraper {
    * @returns Video
    */
 
-  async video(uri: string, noWaterMark?: boolean): Promise<Video | void> {
+  async video(uri: string): Promise<Video | void> {
     if (!uri) throw new Error("A video URL must be provided");
-    let videoObject = await this.TryFetch(uri);
-    const id = videoObject.ItemList?.video?.list[0] ?? 0;
+    let videoData = await this.TryFetch(uri);
+    const videoObject =
+      videoData["__DEFAULT_SCOPE__"]["webapp.video-detail"].itemInfo.itemStruct;
+
+    const id = videoObject.id;
     if (id == 0) return console.log(`Could not find the Video on Tiktok!`);
-    const videoURL = noWaterMark
-      ? await this.noWaterMark(uri)
-      : videoObject.ItemModule[id].video.playAddr.trim();
+
+    const videoURL = await this.noWaterMark(uri);
 
     const videoResult: IVideo = new Video(
       id,
-      videoObject.ItemModule[id].desc,
-      new Date(
-        Number(videoObject.ItemModule[id].createTime) * 1000
-      ).toLocaleDateString(),
-      Number(videoObject.ItemModule[id].video.height),
-      Number(videoObject.ItemModule[id].video.width),
-      Number(videoObject.ItemModule[id].video.duration),
-      videoObject.ItemModule[id].video.ratio,
-      videoObject.ItemModule[id].stats.shareCount,
-      videoObject.ItemModule[id].stats.diggCount,
-      videoObject.ItemModule[id].stats.commentCount,
-      videoObject.ItemModule[id].stats.playCount,
+      videoObject.desc,
+      new Date(Number(videoObject.createTime) * 1000).toLocaleDateString(),
+      Number(videoObject.video.height),
+      Number(videoObject.video.width),
+      Number(videoObject.video.duration),
+      videoObject.video.ratio,
+      videoObject.stats.shareCount,
+      videoObject.stats.diggCount,
+      videoObject.stats.commentCount,
+      videoObject.stats.playCount,
+      //@ts-expect-error
       videoURL,
-      videoObject.ItemModule[id].video.cover,
-      videoObject.ItemModule[id].video.dynamicCover,
+      videoObject.video.cover,
+      videoObject.video.dynamicCover,
       videoURL,
-      videoObject.ItemModule[id].video.format,
-      videoObject.ItemModule[id].author,
-      `https://www.tiktok.com/@${videoObject.ItemModule[id].author}/video/${id}`
+      videoObject.video.format,
+      videoObject.author,
+      `https://www.tiktok.com/@${videoObject.author.uniqueId}/video/${id}`
     );
 
     return videoResult;
@@ -217,23 +225,24 @@ export class TTScraper {
     if (!username) throw new Error("Please enter a username");
 
     let infoObject = await this.TryFetch(`https://www.tiktok.com/@${username}`);
-    const userObject = infoObject.UserModule.users[username];
+    const userObject =
+      infoObject["__DEFAULT_SCOPE__"]["webapp.user-detail"].userInfo;
 
     const userResult: IUser = new User(
-      userObject.id,
-      userObject.uniqueId,
-      userObject.nickname,
-      userObject.avatarLarger,
-      userObject.signature.trim(),
+      userObject.user.id,
+      userObject.user.uniqueId,
+      userObject.user.nickname,
+      userObject.user.avatarLarger,
+      userObject.user.signature.trim(),
       new Date(userObject.createTime * 1000).toLocaleDateString(),
-      userObject.verified,
-      userObject.secUid,
-      userObject?.bioLink?.link,
-      userObject.privateAccount,
-      infoObject.UserModule.stats[username].followerCount,
-      infoObject.UserModule.stats[username].followingCount,
-      infoObject.UserModule.stats[username].heart,
-      infoObject.UserModule.stats[username].videoCount
+      userObject.user.verified,
+      userObject.user.secUid,
+      userObject?.bioLink?.link ?? "none",
+      userObject.user.privateAccount,
+      userObject.stats.followerCount,
+      userObject.stats.followingCount,
+      userObject.stats.heart,
+      userObject.stats.videoCount
     );
     return userResult;
   }
@@ -325,20 +334,20 @@ export class TTScraper {
   async getMusic(link: string): Promise<Music> {
     if (!link) throw new Error("You must provide a link!");
 
-    let musicObject: any = await this.TryFetch(link);
-
-    const id = musicObject.ItemList.video.list[0];
+    let musicdata: any = await this.TryFetch(link);
+    const musicObject =
+      musicdata["__DEFAULT_SCOPE__"]["webapp.video-detail"].itemInfo.itemStruct;
 
     const music: IMusic = new Music(
-      musicObject.ItemModule[id].music.id,
-      musicObject.ItemModule[id].music.title,
-      musicObject.ItemModule[id].music.playUrl,
-      musicObject.ItemModule[id].music.coverLarge,
-      musicObject.ItemModule[id].music.coverThumb,
-      musicObject.ItemModule[id].music.authorName,
-      Number(musicObject.ItemModule[id].music.duration),
-      musicObject.ItemModule[id].music.original,
-      musicObject.ItemModule[id].music.album
+      musicObject.music.id,
+      musicObject.music.title,
+      musicObject.music.playUrl,
+      musicObject.music.coverLarge,
+      musicObject.music.coverThumb,
+      musicObject.music.authorName,
+      Number(musicObject.music.duration),
+      musicObject.music.original,
+      musicObject.music.album
     );
 
     return music;
@@ -468,7 +477,7 @@ export class TTScraper {
       throw new Error("You must provide a tag name to complete the search!");
 
     let tagsObject = await this.TryFetch(`https://www.tiktok.com/tag/${tag}`);
-
+    console.log(tagsObject);
     const { ItemList } = tagsObject;
 
     const videos: IVideo[] = [];
